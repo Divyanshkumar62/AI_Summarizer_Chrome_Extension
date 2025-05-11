@@ -1,0 +1,114 @@
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+body{
+    background-color: white;
+    font-family: Arial, sans-serif;
+    color: black;
+    min-width: 200px;
+    padding: 14px;
+
+}
+
+.input-container{
+    display: flex;
+    gap: 10px;
+    font-size: 14px;
+    margin: 10px 0;
+}
+
+#summary-type{
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    background-color: white;
+    color: black;
+    outline: none;
+    font-weight: 600;
+}
+
+.btn {
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 14px;
+    border-radius: 5px;
+}
+#summarize{
+    background-color: #1a9afb;
+}
+#copy, .btn{
+    background-color: rgb(2, 202, 2);
+}
+
+#result {
+    min-width: 500px;
+    min-height: 200px;
+    border: 2px solid #ccc;
+    border-radius: 5px;
+    padding: 10px;
+    margin-top: 10px;
+    background-color: #e4e4f3;
+    color: black;
+    font-size: 12px;
+    text-wrap: wrap;
+}
+
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 50vh;
+    color: black;
+    font-size: 18px;
+}
+
+.form-group{
+    background-color: white;
+    padding: 15px;
+    border-radius: 5px;
+    box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.4)
+
+}
+
+#api-key{
+    padding: 5px 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    outline: none;
+    background-color: transparent;
+    font-size: 16px;
+    margin: 15px 0;
+}
+
+#save-button{
+    background-color: #1a9afb;
+    margin: 15px 140px; 
+}
+
+#success-message{
+    color:rgb(5, 187, 5);
+    margin-left: 90px; 
+    display: none;
+}
+
+.loader {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0%{
+        transform: rotate(0deg);
+    } 
+    100%{
+        transform: rotate(360deg);
+    }
+}
