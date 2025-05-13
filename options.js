@@ -1,17 +1,25 @@
 document.addEventListener("DOMContentLoaded", () => {
-    chrome.storage.sync.get(["geminiApiKey"], ({ geminiApiKey }) => {
-        if(geminiApiKey)
-            document.getElementById("api-key").value = geminiApiKey
-    });
+  const apiKeyInput = document.getElementById("api-key");
+  const saveButton = document.getElementById("save-button");
+  const successMessage = document.getElementById("success-message");
 
-    document.getElementById("save-button").addEventListener("click", () => {
-        const apiKey = document.getElementById("api-key").value.trim();
-        if(!apiKey)
-            return;
-        
-        chrome.storage.sync.set({ geminiApiKey: apiKey }, () => {
-            document.getElementById("success-message").style.display = "block";
-            setTimeout(() => window.close(), 1500)
-        })
-    })
-})
+  // Load existing key
+  chrome.storage.sync.get(["geminiApiKey"], ({ geminiApiKey }) => {
+    if (geminiApiKey) {
+      apiKeyInput.value = geminiApiKey;
+    }
+  });
+
+  // Save key
+  saveButton.addEventListener("click", () => {
+    const newKey = apiKeyInput.value.trim();
+    if (newKey) {
+      chrome.storage.sync.set({ geminiApiKey: newKey }, () => {
+        successMessage.style.display = "block";
+        setTimeout(() => {
+          window.close()
+        }, 1500);
+      });
+    }
+  });
+});

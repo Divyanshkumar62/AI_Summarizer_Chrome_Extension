@@ -1,27 +1,29 @@
 {
-    "manifest_version": 3,
-    "name": "AI Summarizer for Articles",
-    "version": "1.0",
-
-    "permissions": ["scripting", "activeTab", "storage"],
-
-    "action": {
-        "default_popup": "popup.html",
-        "default_icon": "icon.png"
-    },
-
-    "content_scripts": [
-        {
-            "matches": ["<all_urls>"],
-            "js": ["content.js"]
-        }
-    ],
-    
-    "background": {
-        "service_worker": "background.js"
-    },
-
-    "options_page": "options.html",
-
-    "host_permissions": ["<all_urls>"]
+  "manifest_version": 3,
+  "name": "AI Summarizer",
+  "version": "1.0",
+  "description": "Summarizes text from articles and selections using Gemini.",
+  "permissions": ["storage", "activeTab", "tabs", "scripting", "contextMenus"],
+  "host_permissions": ["<all_urls>"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": "icon.png"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "options_page": "options.html",
+  "icons": {
+    "16": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  }
 }

@@ -1,0 +1,29 @@
+/* content.css */
+
+.gemini-summarize-btn {
+    position: absolute;
+    z-index: 99999;
+    padding: 4px 8px;
+    background: #4A90E2;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    font-family: sans-serif;
+  }
+  
+  .gemini-summary-tooltip {
+    position: absolute;
+    max-width: 400px;
+    background: #ffffff;
+    border: 1px solid #ccc;
+    padding: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    border-radius: 6px;
+    z-index: 999999;
+    font-size: 14px;
+    font-family: sans-serif;
+    white-space: pre-wrap;
+  }
+  

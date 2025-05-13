@@ -1,86 +1,105 @@
-import { showSummaryOverlay } from "./overlay";
+function getArticleText() {
+  const article = document.querySelector("article");
+  if (article) return article.innerText;
 
-function getArticleText(){
-    const article = document.querySelector('article');
-    if (article) {
-        return article.innerText;
-    } 
+  const paragraphs = Array.from(document.querySelectorAll("p"));
+  if (paragraphs.length > 0)
+    return paragraphs.map((p) => p.innerText).join("\n");
 
-    const paragraphs = Array.from(document.querySelectorAll('p'));
-    if(paragraphs.length > 0)
-        return paragraphs.map((p) => p.innerText).join('\n');
-    // Fallback to the entire body text if no article or paragraphs are found
-    const main = document.querySelector('main');
-    if (main) {
-        return main.innerText;
-    }
+  const main = document.querySelector("main");
+  if (main) return main.innerText;
+
+  return document.body.innerText;
 }
 
 chrome.runtime.onMessage.addListener((req, _sender, sendResponse) => {
-    if((req.type == "GET_ARTICLE_TEXT")){
-        const text = getArticleText();
-        sendResponse({ text })
-    }
-})
-
-chrome.storage.sync.get(["geminiApiKey"], ({ geminiApiKey }) => {
-
-    if (!geminiApiKey) {
-      resultDiv.textContent = "No API key set. Click the gear icon to add one.";
-      return;
-    }
-
-    chrome.runtime.onMessage.addListener(
-      async (message, _sender, sendResponse) => {
-        if (message.type === "SUMMARIZE_HIGHLIGHT") {
-          const text = message.selectedText;
-          if (!text || text.length < 20) {
-            alert("Please select a longer text snippet.");
-            return;
-          }
-          try {
-            const summary = await getGeminiSummary(text, "highlighted", geminiApiKey);
-            showSummaryOverlay(summary);
-          } catch (err) {
-            alert("Failed to summarize: " + err.message);
-          }
-        }
-      }
-    );
-})
-  
-
-async function getGeminiSummary(rawText, type, apiKey) {
-  const maxChar = 20000;
-  const text =
-    rawText.length > maxChar ? rawText.slice(0, maxChar) + "..." : rawText;
-
-  const promptMap = {
-    brief: `Summarize in 3-5 sentences:\n\n${text}`,
-    detailed: `Give a detailed and brief summary highlighting the important parts:\n\n${text}`,
-    bullets: `Summarize in 7-10 or more bullet points (start each line with numbers like"(1) "):\n\n${text}`,
-  };
-
-  const prompt = promptMap[type] || promptMap.brief;
-
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.2 },
-      }),
-    }
-  );
-  if (!res.ok) {
-    const { error } = await res.json();
-    throw new Error(error?.message || "Request Failed");
+  if (req.type === "GET_ARTICLE_TEXT") {
+    const text = getArticleText(); // or however you extract main text
+    sendResponse({ text });
+    console.log(text)
+    return true; // keep message channel open for async responses
   }
 
-  const data = await res.json();
-  return (
-    data.candidates?.[0]?.content?.parts?.[0]?.text ?? "No Summary Available."
-  );
+  if (req.type === "show-summary") {
+    showSummaryTooltip(req.summary);
+  }
+});
+
+
+let summarizeBtn = null;
+let summaryTooltip = null;
+
+document.addEventListener("mouseup", () => {
+  const selectedText = window.getSelection()?.toString()?.trim();
+
+  if (selectedText) {
+    const range = window.getSelection().getRangeAt(0);
+    const rect = range.getBoundingClientRect();
+    showSummarizeButton(rect, selectedText);
+  } else {
+    removeSummarizeButton();
+  }
+});
+
+function showSummarizeButton(rect, selectedText) {
+  removeSummarizeButton();
+
+  summarizeBtn = document.createElement("button");
+  summarizeBtn.innerText = "Summarize";
+  summarizeBtn.className = "gemini-summarize-btn";
+  summarizeBtn.style.position = "absolute";
+  summarizeBtn.style.top = `${rect.bottom + window.scrollY}px`;
+  summarizeBtn.style.left = `${rect.right + window.scrollX}px`;
+  summarizeBtn.style.zIndex = "9999";
+
+  summarizeBtn.onclick = () => {
+    chrome.runtime.sendMessage({
+      type: "summarize-selection",
+      text: selectedText,
+    });
+    removeSummarizeButton();
+  };
+
+  document.body.appendChild(summarizeBtn);
+}
+
+function removeSummarizeButton() {
+  if (summarizeBtn) {
+    summarizeBtn.remove();
+    summarizeBtn = null;
+  }
+}
+
+function showSummaryTooltip(summary) {
+  removeSummaryTooltip();
+
+  const selection = window.getSelection();
+  if (!selection.rangeCount) return;
+
+  const range = selection.getRangeAt(0);
+  const rect = range.getBoundingClientRect();
+
+  summaryTooltip = document.createElement("div");
+  summaryTooltip.className = "gemini-summary-tooltip";
+  summaryTooltip.innerText = summary;
+  summaryTooltip.style.position = "absolute";
+  summaryTooltip.style.top = `${rect.bottom + window.scrollY + 10}px`;
+  summaryTooltip.style.left = `${rect.left + window.scrollX}px`;
+  summaryTooltip.style.backgroundColor = "#fff";
+  summaryTooltip.style.border = "1px solid #ccc";
+  summaryTooltip.style.padding = "10px";
+  summaryTooltip.style.zIndex = "9999";
+
+  document.body.appendChild(summaryTooltip);
+
+  setTimeout(() => {
+    removeSummaryTooltip();
+  }, 15000); // Hide after 15 seconds
+}
+
+function removeSummaryTooltip() {
+  if (summaryTooltip) {
+    summaryTooltip.remove();
+    summaryTooltip = null;
+  }
 }
