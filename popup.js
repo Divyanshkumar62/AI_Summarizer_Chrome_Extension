@@ -8,7 +8,6 @@ document.addEventListener("DOMContentLoaded", () => {
     resultDiv.textContent = "Summarizing...";
 
     try {
-      // Get active tab
       const [tab] = await chrome.tabs.query({
         active: true,
         currentWindow: true,
@@ -19,13 +18,11 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      // Optional: inject content.js manually in case it wasn't injected (e.g., SPA, Shadow DOM)
       await chrome.scripting.executeScript({
         target: { tabId: tab.id },
         files: ["content.js"],
       });
 
-      // Send message to content script
       const response = await new Promise((resolve, reject) => {
         chrome.tabs.sendMessage(tab.id, { type: "GET_ARTICLE_TEXT" }, (res) => {
           if (chrome.runtime.lastError) {
@@ -43,13 +40,13 @@ document.addEventListener("DOMContentLoaded", () => {
       const { text } = response;
       const summaryType = summaryTypeSelect.value;
 
-      // Send text to background or summarizer
+      // Note: No tooltip trigger here
       const summary = await chrome.runtime.sendMessage({
         action: "summarize_text",
         text,
         summaryType,
+        showTooltip: false, // explicitly prevent tooltip
       });
-      console.log(summary)
 
       resultDiv.textContent = summary || "⚠️ No summary returned.";
     } catch (err) {
@@ -59,7 +56,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   copyBtn.addEventListener("click", () => {
-    const text = resultDiv.textContent;
+    const text = document.getElementById("result").textContent;
     navigator.clipboard.writeText(text).then(() => {
       copyBtn.textContent = "Copied!";
       setTimeout(() => (copyBtn.textContent = "Copy Summary"), 2000);

@@ -1,3 +1,6 @@
+let summarizeBtn = null;
+let summaryTooltip = null;
+
 function getArticleText() {
   const article = document.querySelector("article");
   if (article) return article.innerText;
@@ -12,27 +15,26 @@ function getArticleText() {
   return document.body.innerText;
 }
 
+// Listener for messages from background.js
 chrome.runtime.onMessage.addListener((req, _sender, sendResponse) => {
+  console.log("[Content Script] Message received:", req);
+
   if (req.type === "GET_ARTICLE_TEXT") {
-    const text = getArticleText(); // or however you extract main text
+    const text = getArticleText();
     sendResponse({ text });
-    console.log(text)
-    return true; // keep message channel open for async responses
+    return true;
   }
 
-  if (req.type === "show-summary") {
+  if (req.type === "show-summary-tooltip") {
     showSummaryTooltip(req.summary);
   }
 });
 
-
-let summarizeBtn = null;
-let summaryTooltip = null;
-
+// Detect selected text on mouseup
 document.addEventListener("mouseup", () => {
   const selectedText = window.getSelection()?.toString()?.trim();
-
   if (selectedText) {
+    console.log("[Content Script] Text selected:", selectedText);
     const range = window.getSelection().getRangeAt(0);
     const rect = range.getBoundingClientRect();
     showSummarizeButton(rect, selectedText);
@@ -44,19 +46,53 @@ document.addEventListener("mouseup", () => {
 function showSummarizeButton(rect, selectedText) {
   removeSummarizeButton();
 
+  console.log("[Content Script] Showing summarize button...");
+
   summarizeBtn = document.createElement("button");
   summarizeBtn.innerText = "Summarize";
-  summarizeBtn.className = "gemini-summarize-btn";
-  summarizeBtn.style.position = "absolute";
-  summarizeBtn.style.top = `${rect.bottom + window.scrollY}px`;
-  summarizeBtn.style.left = `${rect.right + window.scrollX}px`;
-  summarizeBtn.style.zIndex = "9999";
+  Object.assign(summarizeBtn.style, {
+    position: "absolute",
+    top: `${rect.top + window.scrollY - 50}px`,
+    left: `${rect.left + window.scrollX}px`,
+    padding: "6px 12px",
+    backgroundColor: "#007bff",
+    color: "white",
+    border: "none",
+    borderRadius: "5px",
+    zIndex: "9999",
+    cursor: "pointer",
+  });
 
   summarizeBtn.onclick = () => {
-    chrome.runtime.sendMessage({
-      type: "summarize-selection",
-      text: selectedText,
-    });
+    console.log("[Content Script] Summarize button clicked");
+
+    showLoadingTooltip();
+
+    chrome.runtime.sendMessage(
+      {
+        type: "summarize-selection",
+        text: selectedText,
+        showTooltip: true,
+      },
+      (response) => {
+        if (chrome.runtime.lastError) {
+          console.error(
+            "[Content Script] Error sending message:",
+            chrome.runtime.lastError.message
+          );
+          showSummaryTooltip("❌ Error: " + chrome.runtime.lastError.message);
+          return;
+        }
+
+        console.log("[Content Script] Got response from background:", response);
+
+        // Only show if tooltip was not triggered from background
+        if (response) {
+          showSummaryTooltip(response);
+        }
+      }
+    );
+
     removeSummarizeButton();
   };
 
@@ -73,28 +109,66 @@ function removeSummarizeButton() {
 function showSummaryTooltip(summary) {
   removeSummaryTooltip();
 
-  const selection = window.getSelection();
-  if (!selection.rangeCount) return;
-
-  const range = selection.getRangeAt(0);
-  const rect = range.getBoundingClientRect();
-
   summaryTooltip = document.createElement("div");
-  summaryTooltip.className = "gemini-summary-tooltip";
   summaryTooltip.innerText = summary;
-  summaryTooltip.style.position = "absolute";
-  summaryTooltip.style.top = `${rect.bottom + window.scrollY + 10}px`;
-  summaryTooltip.style.left = `${rect.left + window.scrollX}px`;
-  summaryTooltip.style.backgroundColor = "#fff";
-  summaryTooltip.style.border = "1px solid #ccc";
-  summaryTooltip.style.padding = "10px";
-  summaryTooltip.style.zIndex = "9999";
+  Object.assign(summaryTooltip.style, {
+    position: "fixed",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    backgroundColor: "#fff",
+    border: "1px solid #ccc",
+    padding: "16px",
+    maxWidth: "500px",
+    maxHeight: "400px",
+    overflowY: "auto",
+    zIndex: "9999",
+    boxShadow: "0 4px 20px rgba(0, 0, 0, 0.25)",
+    fontSize: "14px",
+    borderRadius: "8px",
+    lineHeight: "1.5",
+  });
 
+  const closeBtn = document.createElement("button");
+  closeBtn.innerText = "Close";
+  Object.assign(closeBtn.style, {
+    marginTop: "12px",
+    display: "block",
+    padding: "6px 12px",
+    background: "#007bff",
+    color: "#fff",
+    border: "none",
+    borderRadius: "4px",
+    cursor: "pointer",
+  });
+
+  closeBtn.onclick = removeSummaryTooltip;
+  summaryTooltip.appendChild(closeBtn);
   document.body.appendChild(summaryTooltip);
 
-  setTimeout(() => {
-    removeSummaryTooltip();
-  }, 15000); // Hide after 15 seconds
+  setTimeout(removeSummaryTooltip, 20000);
+}
+
+function showLoadingTooltip() {
+  removeSummaryTooltip();
+
+  summaryTooltip = document.createElement("div");
+  summaryTooltip.innerText = "⏳ Summarizing...";
+  Object.assign(summaryTooltip.style, {
+    position: "fixed",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    backgroundColor: "#f0f0f0",
+    border: "1px solid #ccc",
+    padding: "15px 30px",
+    borderRadius: "8px",
+    fontSize: "16px",
+    zIndex: "9999",
+    boxShadow: "0 2px 12px rgba(0,0,0,0.2)",
+  });
+
+  document.body.appendChild(summaryTooltip);
 }
 
 function removeSummaryTooltip() {
