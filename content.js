@@ -30,11 +30,15 @@ chrome.runtime.onMessage.addListener((req, _sender, sendResponse) => {
   }
 });
 
-// Detect selected text on mouseup
-document.addEventListener("mouseup", () => {
+// Detect selected text on mouseup, and ignore if clicking on summarize button
+document.addEventListener("mouseup", (e) => {
+  if (e.target === summarizeBtn) {
+    return; // Don't reprocess selection when clicking on summarize button
+  }
+
   const selectedText = window.getSelection()?.toString()?.trim();
   if (selectedText) {
-    console.log("[Content Script] Text selected:", selectedText);
+    console.log("[Content Script] Text selected--", selectedText);
     const range = window.getSelection().getRangeAt(0);
     const rect = range.getBoundingClientRect();
     showSummarizeButton(rect, selectedText);
@@ -54,8 +58,9 @@ function showSummarizeButton(rect, selectedText) {
     position: "absolute",
     top: `${rect.top + window.scrollY - 50}px`,
     left: `${rect.left + window.scrollX}px`,
-    padding: "6px 12px",
+    padding: "8px 14px",
     backgroundColor: "#007bff",
+    fontSize: "16px",
     color: "white",
     border: "none",
     borderRadius: "5px",
@@ -86,7 +91,6 @@ function showSummarizeButton(rect, selectedText) {
 
         console.log("[Content Script] Got response from background:", response);
 
-        // Only show if tooltip was not triggered from background
         if (response) {
           showSummaryTooltip(response);
         }
@@ -110,44 +114,77 @@ function showSummaryTooltip(summary) {
   removeSummaryTooltip();
 
   summaryTooltip = document.createElement("div");
-  summaryTooltip.innerText = summary;
   Object.assign(summaryTooltip.style, {
     position: "fixed",
     top: "50%",
     left: "50%",
     transform: "translate(-50%, -50%)",
-    backgroundColor: "#fff",
+    backgroundColor: "#ffffff",
     border: "1px solid #ccc",
-    padding: "16px",
-    maxWidth: "500px",
+    padding: "24px",
+    maxWidth: "600px",
     maxHeight: "400px",
     overflowY: "auto",
     zIndex: "9999",
-    boxShadow: "0 4px 20px rgba(0, 0, 0, 0.25)",
-    fontSize: "14px",
-    borderRadius: "8px",
-    lineHeight: "1.5",
+    boxShadow: "0 6px 24px rgba(0, 0, 0, 0.2)",
+    fontSize: "16px",
+    borderRadius: "10px",
+    lineHeight: "1.6",
+    fontFamily: "Arial, sans-serif",
+    color: "#222",
   });
+
+  const summaryText = document.createElement("div");
+  summaryText.innerText = summary;
+  summaryText.style.marginBottom = "16px";
+  summaryTooltip.appendChild(summaryText);
+
+  const btnContainer = document.createElement("div");
+  Object.assign(btnContainer.style, {
+    display: "flex",
+    justifyContent: "flex-end",
+    gap: "10px",
+  });
+
+  const copyBtn = document.createElement("button");
+  copyBtn.innerText = "Copy";
+  Object.assign(copyBtn.style, {
+    padding: "8px 16px",
+    background: "#28a745",
+    color: "#fff",
+    border: "none",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontWeight: "bold",
+  });
+  copyBtn.onclick = () => {
+    navigator.clipboard.writeText(summary).then(() => {
+      copyBtn.innerText = "Copied!";
+      setTimeout(() => (copyBtn.innerText = "Copy"), 1500);
+    });
+  };
 
   const closeBtn = document.createElement("button");
   closeBtn.innerText = "Close";
   Object.assign(closeBtn.style, {
-    marginTop: "12px",
-    display: "block",
-    padding: "6px 12px",
+    padding: "8px 16px",
     background: "#007bff",
     color: "#fff",
     border: "none",
-    borderRadius: "4px",
+    borderRadius: "6px",
     cursor: "pointer",
+    fontWeight: "bold",
   });
-
   closeBtn.onclick = removeSummaryTooltip;
-  summaryTooltip.appendChild(closeBtn);
+
+  btnContainer.appendChild(copyBtn);
+  btnContainer.appendChild(closeBtn);
+
+  summaryTooltip.appendChild(btnContainer);
   document.body.appendChild(summaryTooltip);
 
-  setTimeout(removeSummaryTooltip, 20000);
 }
+
 
 function showLoadingTooltip() {
   removeSummaryTooltip();

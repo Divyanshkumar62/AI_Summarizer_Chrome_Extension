@@ -30,7 +30,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     message.type === "summarize-selection" ||
     message.action === "summarize_text"
   ) {
-    // Ensure async sendResponse works
+    
     (async () => {
       const { text, summaryType = "brief", showTooltip } = message;
 
