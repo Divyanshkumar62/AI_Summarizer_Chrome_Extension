@@ -1,6 +1,7 @@
 let summarizeBtn = null;
 let summaryTooltip = null;
 
+
 function getArticleText() {
   const article = document.querySelector("article");
   if (article) return article.innerText;

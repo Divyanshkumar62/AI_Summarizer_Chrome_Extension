@@ -1,8 +1,10 @@
+const speakBtn = document.getElementById("speak-btn");
+const summarizeBtn = document.getElementById("summarize");
+const resultDiv = document.getElementById("result");
+const copyBtn = document.getElementById("copy-btn");
+const summaryTypeSelect = document.getElementById("summary-type");
+
 document.addEventListener("DOMContentLoaded", () => {
-  const summarizeBtn = document.getElementById("summarize");
-  const resultDiv = document.getElementById("result");
-  const copyBtn = document.getElementById("copy-btn");
-  const summaryTypeSelect = document.getElementById("summary-type");
 
   summarizeBtn.addEventListener("click", async () => {
     resultDiv.textContent = "Summarizing...";
@@ -62,4 +64,36 @@ document.addEventListener("DOMContentLoaded", () => {
       setTimeout(() => (copyBtn.textContent = "Copy Summary"), 2000);
     });
   });
+});
+
+//  text to speech
+let isSpeaking = false;
+let isPaused = false;
+let utterance = null;
+
+speakBtn.addEventListener("click", () => {
+  const text = resultDiv.innerText.trim();
+
+  if (!text) return;
+
+  if (!isSpeaking) {
+    utterance = new SpeechSynthesisUtterance(text);
+    const voices = speechSynthesis.getVoices();
+    utterance.voice = voices.find(v => v.name.includes("Google US English")) || voices[0];
+    utterance.rate = 1;
+    utterance.pitch = 1.1;
+
+    utterance.onend = () => {
+      isSpeaking = false;
+      speakBtn.textContent = "Listen";
+    };
+
+    speechSynthesis.speak(utterance);
+    isSpeaking = true;
+    speakBtn.textContent = "Pause";
+  } else if (!isPaused) {
+    speechSynthesis.pause();
+    isPaused = true;
+    speakBtn.textContent = "Paused";
+  }
 });

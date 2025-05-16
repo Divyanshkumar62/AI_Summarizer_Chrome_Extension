@@ -29,6 +29,18 @@ body{
     font-weight: 600;
 }
 
+#speak-btn {
+    outline: none;
+    border: none;
+    cursor: pointer;
+    background: none;
+}
+.mic{
+    width: 40px;
+    height: 40px;
+    z-index: 99;
+}
+
 .btn {
     color: white;
     border: none;
