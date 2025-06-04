@@ -1,25 +1,50 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <link rel="stylesheet" href="styles.css">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="styles.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
     <title>AI Summarizer for Articles</title>
-</head>
-<body >
-    <h1>AI Summary</h1>
-    <div class="input-container">
-        <select id="summary-type">
-            <option value="brief">Brief</option>
-            <option value="detailed">Detailed</option>
+  </head>
+  <body>
+    <div class="popup-container">
+      <div class="popup-header">
+        <h1>AI Summary</h1>
+        <p class="subtitle">Get instant summaries of your selected text</p>
+      </div>
+
+      <div class="input-container">
+        <div class="select-wrapper">
+          <select id="summary-type">
+            <option value="brief">Brief Summary</option>
+            <option value="detailed">Detailed Analysis</option>
             <option value="bullets">Bullet Points</option>
-        </select>
-        <button class="btn" id="summarize">Summarize</button>
-        <button class="btn" id="copy-btn">Copy</button>
-        <button id="speak-btn"><img class="mic" src="image.png" alt="microphone"></button>
+          </select>
+        </div>
+        <div class="button-group">
+          <button class="btn primary" id="summarize">
+            <span class="btn-icon">✨</span>
+            <span>Summarize</span>
+          </button>
+          <button class="btn secondary" id="copy-btn">
+            <span class="btn-icon">📋</span>
+            <span>Copy</span>
+          </button>
+          <button class="btn icon-btn" id="speak-btn" title="Text to Speech">
+            <img class="mic" src="image.png" alt="microphone" />
+          </button>
+        </div>
+      </div>
+
+      <div class="result-container">
+        <pre id="result">Select a Type and click Summarize</pre>
+      </div>
     </div>
 
-    <pre id="result">Select a Type and click Summarize</pre>
-
     <script type="module" src="popup.js"></script>
-
-</body>
+  </body>
 </html>

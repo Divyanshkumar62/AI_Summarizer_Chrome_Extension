@@ -1,7 +1,6 @@
 let summarizeBtn = null;
 let summaryTooltip = null;
 
-
 function getArticleText() {
   const article = document.querySelector("article");
   if (article) return article.innerText;
@@ -16,7 +15,6 @@ function getArticleText() {
   return document.body.innerText;
 }
 
-// Listener for messages from background.js
 chrome.runtime.onMessage.addListener((req, _sender, sendResponse) => {
   console.log("[Content Script] Message received:", req);
 
@@ -31,10 +29,9 @@ chrome.runtime.onMessage.addListener((req, _sender, sendResponse) => {
   }
 });
 
-// Detect selected text on mouseup, and ignore if clicking on summarize button
 document.addEventListener("mouseup", (e) => {
   if (e.target === summarizeBtn) {
-    return; // Don't reprocess selection when clicking on summarize button
+    return;
   }
 
   const selectedText = window.getSelection()?.toString()?.trim();
@@ -51,27 +48,40 @@ document.addEventListener("mouseup", (e) => {
 function showSummarizeButton(rect, selectedText) {
   removeSummarizeButton();
 
-  console.log("[Content Script] Showing summarize button...");
-
   summarizeBtn = document.createElement("button");
-  summarizeBtn.innerText = "Summarize";
+  summarizeBtn.className = "gemini-summarize-btn";
+  summarizeBtn.innerHTML = '<span class="sparkle">✨</span> Summarize';
   Object.assign(summarizeBtn.style, {
     position: "absolute",
     top: `${rect.top + window.scrollY - 50}px`,
     left: `${rect.left + window.scrollX}px`,
-    padding: "8px 14px",
-    backgroundColor: "#007bff",
-    fontSize: "16px",
+    padding: "8px 16px",
+    background: "linear-gradient(135deg, #4A90E2, #357ABD)",
+    fontSize: "14px",
     color: "white",
     border: "none",
-    borderRadius: "5px",
+    borderRadius: "8px",
     zIndex: "9999",
     cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
+    boxShadow: "0 4px 12px rgba(74, 144, 226, 0.2)",
+    transition: "all 0.2s ease",
+    animation: "buttonAppear 0.3s ease",
   });
 
-  summarizeBtn.onclick = () => {
-    console.log("[Content Script] Summarize button clicked");
+  summarizeBtn.onmouseover = () => {
+    summarizeBtn.style.transform = "translateY(-1px)";
+    summarizeBtn.style.boxShadow = "0 6px 16px rgba(74, 144, 226, 0.3)";
+  };
 
+  summarizeBtn.onmouseout = () => {
+    summarizeBtn.style.transform = "translateY(0)";
+    summarizeBtn.style.boxShadow = "0 4px 12px rgba(74, 144, 226, 0.2)";
+  };
+
+  summarizeBtn.onclick = () => {
     showLoadingTooltip();
 
     chrome.runtime.sendMessage(
@@ -115,67 +125,102 @@ function showSummaryTooltip(summary) {
   removeSummaryTooltip();
 
   summaryTooltip = document.createElement("div");
+  summaryTooltip.className = "gemini-summary-tooltip";
   Object.assign(summaryTooltip.style, {
     position: "fixed",
     top: "50%",
     left: "50%",
     transform: "translate(-50%, -50%)",
     backgroundColor: "#ffffff",
-    border: "1px solid #ccc",
+    border: "1px solid rgba(0, 0, 0, 0.1)",
     padding: "24px",
     maxWidth: "600px",
     maxHeight: "400px",
     overflowY: "auto",
     zIndex: "9999",
-    boxShadow: "0 6px 24px rgba(0, 0, 0, 0.2)",
+    boxShadow: "0 8px 24px rgba(0, 0, 0, 0.12)",
     fontSize: "16px",
-    borderRadius: "10px",
+    borderRadius: "12px",
     lineHeight: "1.6",
-    fontFamily: "Arial, sans-serif",
-    color: "#222",
+    fontFamily: "'Inter', sans-serif",
+    color: "#1f2937",
+    animation: "tooltipAppear 0.3s ease",
+    backdropFilter: "blur(8px)",
   });
 
   const summaryText = document.createElement("div");
   summaryText.innerText = summary;
-  summaryText.style.marginBottom = "16px";
+  summaryText.style.marginBottom = "20px";
   summaryTooltip.appendChild(summaryText);
 
   const btnContainer = document.createElement("div");
   Object.assign(btnContainer.style, {
     display: "flex",
     justifyContent: "flex-end",
-    gap: "10px",
+    gap: "12px",
   });
 
   const copyBtn = document.createElement("button");
   copyBtn.innerText = "Copy";
   Object.assign(copyBtn.style, {
-    padding: "8px 16px",
-    background: "#28a745",
+    padding: "10px 20px",
+    background: "#4A90E2",
     color: "#fff",
     border: "none",
-    borderRadius: "6px",
+    borderRadius: "8px",
     cursor: "pointer",
-    fontWeight: "bold",
+    fontWeight: "500",
+    fontSize: "14px",
+    transition: "all 0.2s ease",
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
   });
+  copyBtn.innerHTML = "<span>📋</span> Copy";
+
+  copyBtn.onmouseover = () => {
+    copyBtn.style.transform = "translateY(-1px)";
+    copyBtn.style.boxShadow = "0 4px 12px rgba(74, 144, 226, 0.2)";
+  };
+
+  copyBtn.onmouseout = () => {
+    copyBtn.style.transform = "translateY(0)";
+    copyBtn.style.boxShadow = "none";
+  };
+
   copyBtn.onclick = () => {
     navigator.clipboard.writeText(summary).then(() => {
-      copyBtn.innerText = "Copied!";
-      setTimeout(() => (copyBtn.innerText = "Copy"), 1500);
+      copyBtn.innerHTML = "<span>✓</span> Copied!";
+      copyBtn.style.background = "#059669";
+      setTimeout(() => {
+        copyBtn.innerHTML = "<span>📋</span> Copy";
+        copyBtn.style.background = "#4A90E2";
+      }, 1500);
     });
   };
 
   const closeBtn = document.createElement("button");
   closeBtn.innerText = "Close";
   Object.assign(closeBtn.style, {
-    padding: "8px 16px",
-    background: "#007bff",
-    color: "#fff",
-    border: "none",
-    borderRadius: "6px",
+    padding: "10px 20px",
+    background: "#f3f4f6",
+    color: "#1f2937",
+    border: "1px solid #e5e7eb",
+    borderRadius: "8px",
     cursor: "pointer",
-    fontWeight: "bold",
+    fontWeight: "500",
+    fontSize: "14px",
+    transition: "all 0.2s ease",
   });
+
+  closeBtn.onmouseover = () => {
+    closeBtn.style.background = "#e5e7eb";
+  };
+
+  closeBtn.onmouseout = () => {
+    closeBtn.style.background = "#f3f4f6";
+  };
+
   closeBtn.onclick = removeSummaryTooltip;
 
   btnContainer.appendChild(copyBtn);
@@ -183,29 +228,52 @@ function showSummaryTooltip(summary) {
 
   summaryTooltip.appendChild(btnContainer);
   document.body.appendChild(summaryTooltip);
-
 }
-
 
 function showLoadingTooltip() {
   removeSummaryTooltip();
 
   summaryTooltip = document.createElement("div");
-  summaryTooltip.innerText = "⏳ Summarizing...";
+  summaryTooltip.className = "gemini-summary-tooltip loading";
   Object.assign(summaryTooltip.style, {
     position: "fixed",
     top: "50%",
     left: "50%",
     transform: "translate(-50%, -50%)",
-    backgroundColor: "#f0f0f0",
-    border: "1px solid #ccc",
-    padding: "15px 30px",
-    borderRadius: "8px",
-    fontSize: "16px",
+    backgroundColor: "#ffffff",
+    border: "1px solid rgba(0, 0, 0, 0.1)",
+    padding: "32px",
+    borderRadius: "12px",
     zIndex: "9999",
-    boxShadow: "0 2px 12px rgba(0,0,0,0.2)",
+    boxShadow: "0 8px 24px rgba(0, 0, 0, 0.12)",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "16px",
+    minWidth: "200px",
+    animation: "tooltipAppear 0.3s ease",
   });
 
+  const loadingIcon = document.createElement("div");
+  Object.assign(loadingIcon.style, {
+    width: "40px",
+    height: "40px",
+    border: "3px solid #f3f4f6",
+    borderTop: "3px solid #4A90E2",
+    borderRadius: "50%",
+    animation: "spin 1s linear infinite",
+  });
+
+  const loadingText = document.createElement("div");
+  loadingText.innerText = "Summarizing...";
+  Object.assign(loadingText.style, {
+    fontSize: "16px",
+    color: "#1f2937",
+    fontWeight: "500",
+  });
+
+  summaryTooltip.appendChild(loadingIcon);
+  summaryTooltip.appendChild(loadingText);
   document.body.appendChild(summaryTooltip);
 }
 
@@ -215,3 +283,35 @@ function removeSummaryTooltip() {
     summaryTooltip = null;
   }
 }
+
+// Add keyframes for animations
+const style = document.createElement("style");
+style.textContent = `
+  @keyframes buttonAppear {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes tooltipAppear {
+    from {
+      opacity: 0;
+      transform: translate(-50%, -48%);
+    }
+    to {
+      opacity: 1;
+      transform: translate(-50%, -50%);
+    }
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`;
+document.head.appendChild(style);

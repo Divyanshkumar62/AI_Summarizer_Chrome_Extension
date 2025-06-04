@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const saveButton = document.getElementById("save-button");
   const successMessage = document.getElementById("success-message");
 
-  // Load existing key
+
   chrome.storage.sync.get(["geminiApiKey"], ({ geminiApiKey }) => {
     if (geminiApiKey) {
       apiKeyInput.value = geminiApiKey;

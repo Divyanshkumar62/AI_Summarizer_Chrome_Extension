@@ -42,12 +42,12 @@ document.addEventListener("DOMContentLoaded", () => {
       const { text } = response;
       const summaryType = summaryTypeSelect.value;
 
-      // Note: No tooltip trigger here
+      
       const summary = await chrome.runtime.sendMessage({
         action: "summarize_text",
         text,
         summaryType,
-        showTooltip: false, // explicitly prevent tooltip
+        showTooltip: false, 
       });
 
       resultDiv.textContent = summary || "⚠️ No summary returned.";
