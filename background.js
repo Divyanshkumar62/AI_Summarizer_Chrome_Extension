@@ -1,10 +1,13 @@
-import { getGeminiSummary } from "./summarizer.js";
+import { getGeminiSummary } from "./src/summarizer.js";
+
+console.log("[Background] Service worker starting...");
 
 // Create context menu on install
 chrome.runtime.onInstalled.addListener(() => {
+  console.log("[Background] Extension installed, creating context menu...");
   chrome.contextMenus.create({
     id: "summarize-selection",
-    title: "Summarize with Gemini",
+    title: "Summarize with SmartDigest",
     contexts: ["selection"],
   });
 
@@ -24,13 +27,12 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 
 // Message listener for summarize-selection (popup or content.js)
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log("[Background] Message received:", message);
+  // console.log("[Background] Message received:", message);
 
   if (
     message.type === "summarize-selection" ||
     message.action === "summarize_text"
   ) {
-    
     (async () => {
       const { text, summaryType = "brief", showTooltip } = message;
 
@@ -48,10 +50,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           return;
         }
 
-        console.log("[Background] Summarizing text...");
+        // console.log("[Background] Summarizing text...");
 
         const summary = await getGeminiSummary(text, summaryType, geminiApiKey);
-        console.log("[Background] Summary generated:", summary);
+        // console.log("[Background] Summary generated:", summary);
 
         const tabId = sender.tab?.id ?? message.tabId;
 
@@ -62,7 +64,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           });
         }
 
-        sendResponse(summary); // Reply back to sender
+        sendResponse(summary);
       } catch (error) {
         const errorMsg = "Gemini Error: " + error.message;
         console.error("[Background] Error while summarizing:", errorMsg);
@@ -78,6 +80,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
     })();
 
-    return true; // Keep message channel open for async sendResponse
+    return true;
   }
 });

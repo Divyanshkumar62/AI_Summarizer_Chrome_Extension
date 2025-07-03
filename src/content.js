@@ -16,7 +16,7 @@ function getArticleText() {
 }
 
 chrome.runtime.onMessage.addListener((req, _sender, sendResponse) => {
-  console.log("[Content Script] Message received:", req);
+  // console.log("[Content Script] Message received:", req);
 
   if (req.type === "GET_ARTICLE_TEXT") {
     const text = getArticleText();
@@ -36,7 +36,7 @@ document.addEventListener("mouseup", (e) => {
 
   const selectedText = window.getSelection()?.toString()?.trim();
   if (selectedText) {
-    console.log("[Content Script] Text selected--", selectedText);
+    // console.log("[Content Script] Text selected--", selectedText);
     const range = window.getSelection().getRangeAt(0);
     const rect = range.getBoundingClientRect();
     showSummarizeButton(rect, selectedText);
@@ -100,7 +100,7 @@ function showSummarizeButton(rect, selectedText) {
           return;
         }
 
-        console.log("[Content Script] Got response from background:", response);
+        // console.log("[Content Script] Got response from background:", response);
 
         if (response) {
           showSummaryTooltip(response);

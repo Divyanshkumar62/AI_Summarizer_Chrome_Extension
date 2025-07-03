@@ -13,7 +13,7 @@
   <body>
     <div class="popup-container">
       <div class="popup-header">
-        <h1>AI Summary</h1>
+        <h1>SmartDigest</h1>
         <p class="subtitle">Get instant summaries of your selected text</p>
       </div>
 
@@ -34,9 +34,23 @@
             <span class="btn-icon">📋</span>
             <span>Copy</span>
           </button>
-          <button class="btn icon-btn" id="speak-btn" title="Text to Speech">
-            <img class="mic" src="image.png" alt="microphone" />
-          </button>
+          <div class="speak-button-container">
+            <button class="btn icon-btn" id="speak-btn" title="Text to Speech">
+              <img class="mic" src="/icons/microphone.png" alt="microphone" />
+            </button>
+            <div class="floating-controls" id="floating-controls">
+              <button
+                class="floating-btn pause-btn"
+                id="pause-btn"
+                title="Pause/Resume"
+              >
+                <span class="floating-icon">⏸</span>
+              </button>
+              <button class="floating-btn stop-btn" id="stop-btn" title="Stop">
+                <span class="floating-icon">⏹</span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 

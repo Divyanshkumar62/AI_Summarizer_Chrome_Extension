@@ -581,5 +581,87 @@ body {
 }
 
 .success {
-  animation: successPulse 0.3s ease;
+  animation: successPulse 0.6s ease-in-out;
+}
+
+/* Floating Controls Styles */
+.speak-button-container {
+  position: relative;
+  display: inline-block;
+}
+
+.floating-controls {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.floating-controls.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.floating-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-lg);
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.floating-btn:hover {
+  transform: scale(1.1);
+}
+
+.floating-btn:active {
+  transform: scale(0.95);
+}
+
+.pause-btn {
+  background-color: #3b82f6;
+  color: white;
+  margin-bottom: 8px;
+}
+
+.pause-btn:hover {
+  background-color: #2563eb;
+}
+
+.stop-btn {
+  background-color: #ef4444;
+  color: white;
+}
+
+.stop-btn:hover {
+  background-color: #dc2626;
+}
+
+.floating-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+/* Disabled speak button state */
+#speak-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+#speak-btn.disabled:hover {
+  background-color: transparent;
 }
