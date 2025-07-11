@@ -13,182 +13,328 @@ let isPaused = false;
 let utterance = null;
 let currentText = "";
 
+// Error message constants
+const ERROR_MESSAGES = {
+  TAB_NOT_FOUND: "❌ Could not get the active tab.",
+  TEXT_EXTRACTION_FAILED: "❌ Couldn't extract text from this page.",
+  NO_SUMMARY: "⚠️ No summary returned.",
+  TTS_FAILED: "🔇 Text-to-Speech failed. Your browser may not support it.",
+  TTS_NOT_SUPPORTED: "🔇 Text-to-Speech is not supported in this browser.",
+  UNKNOWN_ERROR: "❌ An unexpected error occurred. Please try again.",
+};
+
+// Check if TTS is supported
+function isTTSSupported() {
+  return "speechSynthesis" in window && "SpeechSynthesisUtterance" in window;
+}
+
+// Safe text content assignment (XSS protection)
+function setTextContent(element, text) {
+  if (element && typeof text === "string") {
+    element.textContent = text;
+  }
+}
+
+// Show error message
+function showError(message) {
+  setTextContent(resultDiv, message);
+}
+
+// Show loading message
+function showLoading() {
+  setTextContent(resultDiv, "Summarizing...");
+}
+
 document.addEventListener("DOMContentLoaded", () => {
-  summarizeBtn.addEventListener("click", async () => {
-    resultDiv.textContent = "Summarizing...";
+  try {
+    summarizeBtn.addEventListener("click", async () => {
+      try {
+        console.log("[Popup] Summarize button clicked");
+        showLoading();
 
-    try {
-      const [tab] = await chrome.tabs.query({
-        active: true,
-        currentWindow: true,
-      });
-
-      if (!tab || !tab.id) {
-        resultDiv.textContent = "❌ Could not get the active tab.";
-        return;
-      }
-
-      await chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        files: ["src/content.js"],
-      });
-
-      const response = await new Promise((resolve, reject) => {
-        chrome.tabs.sendMessage(tab.id, { type: "GET_ARTICLE_TEXT" }, (res) => {
-          if (chrome.runtime.lastError) {
-            return reject(new Error(chrome.runtime.lastError.message));
-          }
-          resolve(res);
+        const [tab] = await chrome.tabs.query({
+          active: true,
+          currentWindow: true,
         });
-      });
 
-      if (!response || !response.text) {
-        resultDiv.textContent = "❌ Couldn't extract text from this page.";
-        return;
+        if (!tab || !tab.id) {
+          console.error("[Popup] No active tab found");
+          showError(ERROR_MESSAGES.TAB_NOT_FOUND);
+          return;
+        }
+
+        console.log("[Popup] Active tab found:", tab.id);
+
+        await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          files: ["src/content.js"],
+        });
+
+        console.log("[Popup] Content script injected");
+
+        const response = await new Promise((resolve, reject) => {
+          chrome.tabs.sendMessage(
+            tab.id,
+            { type: "GET_ARTICLE_TEXT" },
+            (res) => {
+              if (chrome.runtime.lastError) {
+                console.error(
+                  "[Popup] Chrome runtime error:",
+                  chrome.runtime.lastError
+                );
+                return reject(new Error(chrome.runtime.lastError.message));
+              }
+              console.log("[Popup] Article text response:", res);
+              resolve(res);
+            }
+          );
+        });
+
+        if (!response || !response.text) {
+          console.error("[Popup] No text extracted from page");
+          showError(ERROR_MESSAGES.TEXT_EXTRACTION_FAILED);
+          return;
+        }
+
+        console.log("[Popup] Text extracted, length:", response.text.length);
+        const { text } = response;
+        const summaryType = summaryTypeSelect.value;
+
+        console.log("[Popup] Sending summarization request...");
+        const summary = await chrome.runtime.sendMessage({
+          action: "summarize_text",
+          text,
+          summaryType,
+          showTooltip: false,
+        });
+
+        console.log(
+          "[Popup] Summary received:",
+          summary ? "Success" : "Failed"
+        );
+        setTextContent(resultDiv, summary || ERROR_MESSAGES.NO_SUMMARY);
+      } catch (err) {
+        console.error("[Popup] Detailed error:", err);
+        showError(`⚠️ ${err.message || ERROR_MESSAGES.UNKNOWN_ERROR}`);
       }
-
-      const { text } = response;
-      const summaryType = summaryTypeSelect.value;
-
-      const summary = await chrome.runtime.sendMessage({
-        action: "summarize_text",
-        text,
-        summaryType,
-        showTooltip: false,
-      });
-
-      resultDiv.textContent = summary || "⚠️ No summary returned.";
-    } catch (err) {
-      console.error("❌ Error:", err);
-      resultDiv.textContent = `⚠️ ${err.message}`;
-    }
-  });
-
-  copyBtn.addEventListener("click", () => {
-    const text = document.getElementById("result").textContent;
-    navigator.clipboard.writeText(text).then(() => {
-      copyBtn.textContent = "Copied!";
-      setTimeout(() => (copyBtn.textContent = "Copy Summary"), 2000);
     });
-  });
+
+    copyBtn.addEventListener("click", () => {
+      try {
+        const text = resultDiv.textContent;
+        if (!text || text === "Select a Type and click Summarize") {
+          return;
+        }
+
+        navigator.clipboard
+          .writeText(text)
+          .then(() => {
+            copyBtn.textContent = "Copied!";
+            setTimeout(() => (copyBtn.textContent = "Copy Summary"), 2000);
+          })
+          .catch((error) => {
+            console.error("[Popup] Copy failed:", error);
+            copyBtn.textContent = "Failed";
+            setTimeout(() => (copyBtn.textContent = "Copy Summary"), 2000);
+          });
+      } catch (error) {
+        console.error("[Popup] Copy error:", error);
+      }
+    });
+  } catch (error) {
+    console.error("[Popup] DOMContentLoaded error:", error);
+  }
 });
 
 // Enhanced TTS Functionality
 function showFloatingControls() {
-  floatingControls.classList.add("visible");
-  speakBtn.classList.add("disabled");
+  try {
+    floatingControls.classList.add("visible");
+    speakBtn.classList.add("disabled");
+  } catch (error) {
+    console.error("[Popup] Error showing floating controls:", error);
+  }
 }
 
 function hideFloatingControls() {
-  floatingControls.classList.remove("visible");
-  speakBtn.classList.remove("disabled");
+  try {
+    floatingControls.classList.remove("visible");
+    speakBtn.classList.remove("disabled");
+  } catch (error) {
+    console.error("[Popup] Error hiding floating controls:", error);
+  }
 }
 
 function updatePauseButtonIcon() {
-  const pauseIcon = pauseBtn.querySelector(".floating-icon");
-  pauseIcon.textContent = isPaused ? "▶️" : "⏸";
+  try {
+    const pauseIcon = pauseBtn.querySelector(".floating-icon");
+    if (pauseIcon) {
+      pauseIcon.textContent = isPaused ? "▶️" : "⏸";
+    }
+  } catch (error) {
+    console.error("[Popup] Error updating pause icon:", error);
+  }
 }
 
 function startTTS(text) {
-  if (!text || isSpeaking) return;
+  try {
+    if (!text || isSpeaking) return;
 
-  currentText = text;
-  utterance = new SpeechSynthesisUtterance(text);
-  const voices = speechSynthesis.getVoices();
-  utterance.voice =
-    voices.find((v) => v.name.includes("Google US English")) || voices[0];
-  utterance.rate = 1;
-  utterance.pitch = 1.1;
+    // Check TTS support
+    if (!isTTSSupported()) {
+      showError(ERROR_MESSAGES.TTS_NOT_SUPPORTED);
+      return;
+    }
 
-  utterance.onend = () => {
+    // Cancel any existing speech to prevent overlapping
+    speechSynthesis.cancel();
+
+    currentText = text;
+    utterance = new SpeechSynthesisUtterance(text);
+
+    // Get available voices
+    const voices = speechSynthesis.getVoices();
+    utterance.voice =
+      voices.find((v) => v.name.includes("Google US English")) || voices[0];
+    utterance.rate = 1;
+    utterance.pitch = 1.1;
+
+    utterance.onend = () => {
+      isSpeaking = false;
+      isPaused = false;
+      hideFloatingControls();
+      // Ensure microphone button is re-enabled
+      speakBtn.classList.remove("disabled");
+    };
+
+    utterance.onpause = () => {
+      isPaused = true;
+      updatePauseButtonIcon();
+    };
+
+    utterance.onresume = () => {
+      isPaused = false;
+      updatePauseButtonIcon();
+    };
+
+    utterance.onerror = (event) => {
+      console.error("[Popup] TTS Error:", event);
+      isSpeaking = false;
+      isPaused = false;
+      hideFloatingControls();
+      showError(ERROR_MESSAGES.TTS_FAILED);
+    };
+
+    speechSynthesis.speak(utterance);
+    isSpeaking = true;
+    isPaused = false;
+    showFloatingControls();
+    updatePauseButtonIcon();
+  } catch (error) {
+    console.error("[Popup] TTS start error:", error);
     isSpeaking = false;
     isPaused = false;
     hideFloatingControls();
-    // Ensure microphone button is re-enabled
-    speakBtn.classList.remove("disabled");
-  };
-
-  utterance.onpause = () => {
-    isPaused = true;
-    updatePauseButtonIcon();
-  };
-
-  utterance.onresume = () => {
-    isPaused = false;
-    updatePauseButtonIcon();
-  };
-
-  speechSynthesis.speak(utterance);
-  isSpeaking = true;
-  isPaused = false;
-  showFloatingControls();
-  updatePauseButtonIcon();
+    showError(ERROR_MESSAGES.TTS_FAILED);
+  }
 }
 
 function pauseResumeTTS() {
-  if (!isSpeaking) return;
+  try {
+    if (!isSpeaking) return;
 
-  if (isPaused) {
-    speechSynthesis.resume();
-  } else {
-    speechSynthesis.pause();
+    if (isPaused) {
+      speechSynthesis.resume();
+    } else {
+      speechSynthesis.pause();
+    }
+  } catch (error) {
+    console.error("[Popup] TTS pause/resume error:", error);
+    showError(ERROR_MESSAGES.TTS_FAILED);
   }
 }
 
 function stopTTS() {
-  if (!isSpeaking) return;
+  try {
+    if (!isSpeaking) return;
 
-  speechSynthesis.cancel();
-  isSpeaking = false;
-  isPaused = false;
-  hideFloatingControls();
+    speechSynthesis.cancel();
+    isSpeaking = false;
+    isPaused = false;
+    hideFloatingControls();
 
-  // Restart TTS from beginning
-  if (currentText) {
-    setTimeout(() => startTTS(currentText), 100);
+    // Restart TTS from beginning
+    if (currentText) {
+      setTimeout(() => startTTS(currentText), 100);
+    }
+  } catch (error) {
+    console.error("[Popup] TTS stop error:", error);
+    isSpeaking = false;
+    isPaused = false;
+    hideFloatingControls();
   }
 }
 
 // Event Listeners
 speakBtn.addEventListener("click", (e) => {
-  e.stopPropagation();
+  try {
+    e.stopPropagation();
 
-  // Don't allow clicks if button is disabled
-  if (speakBtn.classList.contains("disabled")) {
-    return;
-  }
+    // Don't allow clicks if button is disabled
+    if (speakBtn.classList.contains("disabled")) {
+      return;
+    }
 
-  const text = resultDiv.innerText.trim();
+    const text = resultDiv.textContent.trim();
 
-  if (!text || text === "Select a Type and click Summarize") return;
+    if (!text || text === "Select a Type and click Summarize") return;
 
-  if (!isSpeaking) {
-    startTTS(text);
+    if (!isSpeaking) {
+      startTTS(text);
+    }
+  } catch (error) {
+    console.error("[Popup] Speak button click error:", error);
   }
 });
 
 pauseBtn.addEventListener("click", (e) => {
-  e.stopPropagation();
-  pauseResumeTTS();
+  try {
+    e.stopPropagation();
+    pauseResumeTTS();
+  } catch (error) {
+    console.error("[Popup] Pause button click error:", error);
+  }
 });
 
 stopBtn.addEventListener("click", (e) => {
-  e.stopPropagation();
-  stopTTS();
+  try {
+    e.stopPropagation();
+    stopTTS();
+  } catch (error) {
+    console.error("[Popup] Stop button click error:", error);
+  }
 });
 
 // Outside click detection
 document.addEventListener("click", (e) => {
-  const isClickInsideControls = floatingControls.contains(e.target);
-  const isClickOnSpeakBtn = speakBtn.contains(e.target);
+  try {
+    const isClickInsideControls = floatingControls.contains(e.target);
+    const isClickOnSpeakBtn = speakBtn.contains(e.target);
 
-  if (isSpeaking && !isClickInsideControls && !isClickOnSpeakBtn) {
-    hideFloatingControls();
-    // Don't stop TTS, just hide controls
+    if (isSpeaking && !isClickInsideControls && !isClickOnSpeakBtn) {
+      hideFloatingControls();
+      // Don't stop TTS, just hide controls
+    }
+  } catch (error) {
+    console.error("[Popup] Outside click detection error:", error);
   }
 });
 
 // Prevent floating controls from triggering outside click
 floatingControls.addEventListener("click", (e) => {
-  e.stopPropagation();
+  try {
+    e.stopPropagation();
+  } catch (error) {
+    console.error("[Popup] Floating controls click error:", error);
+  }
 });
