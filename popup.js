@@ -126,19 +126,57 @@ document.addEventListener("DOMContentLoaded", () => {
           return;
         }
 
+        // Update button to show copy icon and text
+        copyBtn.innerHTML = "<span>📋</span> Copy";
+
         navigator.clipboard
           .writeText(text)
           .then(() => {
-            copyBtn.textContent = "Copied!";
-            setTimeout(() => (copyBtn.textContent = "Copy Summary"), 2000);
+            // Success state - green background with checkmark
+            copyBtn.innerHTML = "<span>✓</span> Copied!";
+            copyBtn.style.background = "#059669";
+            copyBtn.style.transform = "translateY(-1px)";
+            copyBtn.style.boxShadow = "0 4px 12px rgba(5, 150, 105, 0.2)";
+
+            setTimeout(() => {
+              // Reset to original state
+              copyBtn.innerHTML = "<span>📋</span> Copy";
+              copyBtn.style.background = "";
+              copyBtn.style.transform = "";
+              copyBtn.style.boxShadow = "";
+            }, 1500);
           })
           .catch((error) => {
             console.error("[Popup] Copy failed:", error);
-            copyBtn.textContent = "Failed";
-            setTimeout(() => (copyBtn.textContent = "Copy Summary"), 2000);
+            // Error state - red background
+            copyBtn.innerHTML = "<span>❌</span> Failed";
+            copyBtn.style.background = "#dc2626";
+            copyBtn.style.transform = "translateY(-1px)";
+            copyBtn.style.boxShadow = "0 4px 12px rgba(220, 38, 38, 0.2)";
+
+            setTimeout(() => {
+              // Reset to original state
+              copyBtn.innerHTML = "<span>📋</span> Copy";
+              copyBtn.style.background = "";
+              copyBtn.style.transform = "";
+              copyBtn.style.boxShadow = "";
+            }, 1500);
           });
       } catch (error) {
         console.error("[Popup] Copy error:", error);
+        // Error state for exception
+        copyBtn.innerHTML = "<span>❌</span> Failed";
+        copyBtn.style.background = "#dc2626";
+        copyBtn.style.transform = "translateY(-1px)";
+        copyBtn.style.boxShadow = "0 4px 12px rgba(220, 38, 38, 0.2)";
+
+        setTimeout(() => {
+          // Reset to original state
+          copyBtn.innerHTML = "<span>📋</span> Copy";
+          copyBtn.style.background = "";
+          copyBtn.style.transform = "";
+          copyBtn.style.boxShadow = "";
+        }, 1500);
       }
     });
   } catch (error) {

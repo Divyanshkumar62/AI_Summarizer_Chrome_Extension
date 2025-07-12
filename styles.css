@@ -512,10 +512,26 @@ body {
   background-color: var(--bg-secondary);
   color: var(--text-primary);
   border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
 }
 
 .btn.secondary:hover {
   background-color: var(--border-color);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Copy button specific styles */
+#copy-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+#copy-btn span {
+  font-size: 14px;
+  line-height: 1;
 }
 
 .btn.icon-btn {
