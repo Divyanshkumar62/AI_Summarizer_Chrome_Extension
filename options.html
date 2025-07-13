@@ -27,24 +27,159 @@
           <span class="version">v1.0</span>
         </div>
         <nav class="nav-links" aria-label="Main navigation">
-          <a href="#" class="nav-link" aria-label="Help">
+          <button
+            id="general-nav-btn"
+            class="nav-link active"
+            aria-label="General Settings"
+          >
+            <span class="material-icons">settings</span>
+            General
+          </button>
+          <button
+            id="api-nav-btn"
+            class="nav-link"
+            aria-label="API Configuration"
+          >
+            <span class="material-icons">key</span>
+            API Key
+          </button>
+          <button
+            id="settings-nav-btn"
+            class="nav-link"
+            aria-label="TTS Settings"
+          >
+            <span class="material-icons">settings_voice</span>
+            TTS Settings
+          </button>
+          <button id="help-nav-btn" class="nav-link" aria-label="Help">
             <span class="material-icons">help_outline</span>
             Help
-          </a>
-          <a href="#" class="nav-link" aria-label="Documentation">
-            <span class="material-icons">menu_book</span>
-            Docs
-          </a>
-          <a href="#" class="nav-link" aria-label="Support">
+          </button>
+          <button id="support-nav-btn" class="nav-link" aria-label="Support">
             <span class="material-icons">support_agent</span>
             Support
-          </a>
+          </button>
         </nav>
       </header>
 
       <!-- Main Content -->
       <main class="main-content">
-        <div class="form-card">
+        <!-- General Settings Section -->
+        <div id="general-section" class="form-card">
+          <div class="card-header">
+            <h2>General Settings</h2>
+            <p class="card-subtitle">
+              Configure general behavior and appearance preferences
+            </p>
+          </div>
+
+          <div class="form-content">
+            <div class="input-group">
+              <label class="input-label">
+                <span class="material-icons">text_fields</span>
+                Text Selection Tooltip
+              </label>
+              <div class="toggle-wrapper">
+                <label class="toggle-switch">
+                  <input type="checkbox" id="enable-tooltip" />
+                  <span class="toggle-slider"></span>
+                </label>
+                <span class="toggle-label"
+                  >Enable "Summarize" tooltip when text is selected</span
+                >
+              </div>
+              <p class="help-text">
+                Show the floating summarize button when you select text on web
+                pages
+              </p>
+            </div>
+
+            <div class="input-group">
+              <label for="default-summary-type" class="input-label">
+                <span class="material-icons">format_list_bulleted</span>
+                Default Summary Style
+              </label>
+              <div class="input-wrapper">
+                <select
+                  id="default-summary-type"
+                  aria-label="Default Summary Type"
+                >
+                  <option value="brief">Brief Summary</option>
+                  <option value="detailed">Detailed Analysis</option>
+                  <option value="bullets">Bullet Points</option>
+                </select>
+                <span class="material-icons input-icon">expand_more</span>
+              </div>
+              <p class="help-text">
+                Set your preferred summary style as the default option
+              </p>
+            </div>
+
+            <div class="input-group">
+              <label class="input-label">
+                <span class="material-icons">palette</span>
+                Theme / Appearance
+              </label>
+              <div class="theme-options">
+                <label class="theme-option">
+                  <input
+                    type="radio"
+                    name="theme"
+                    value="light"
+                    id="theme-light"
+                  />
+                  <span class="theme-icon">🌞</span>
+                  <span class="theme-label">Light Mode</span>
+                </label>
+                <label class="theme-option">
+                  <input
+                    type="radio"
+                    name="theme"
+                    value="dark"
+                    id="theme-dark"
+                  />
+                  <span class="theme-icon">🌙</span>
+                  <span class="theme-label">Dark Mode</span>
+                </label>
+                <label class="theme-option">
+                  <input
+                    type="radio"
+                    name="theme"
+                    value="auto"
+                    id="theme-auto"
+                  />
+                  <span class="theme-icon">🔄</span>
+                  <span class="theme-label">Auto (System)</span>
+                </label>
+              </div>
+              <p class="help-text">
+                Choose your preferred theme for the extension interface
+              </p>
+            </div>
+
+            <button
+              id="save-general-button"
+              class="btn primary"
+              aria-label="Save General Settings"
+            >
+              <span class="material-icons">save</span>
+              <span>Save General Settings</span>
+            </button>
+
+            <div
+              id="general-success-message"
+              class="success-message"
+              role="alert"
+              aria-live="polite"
+            >
+              <span class="material-icons">check_circle</span>
+              <span>General settings saved successfully!</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- API Configuration Section -->
+        <div id="api-section" class="form-card" style="display: none">
           <div class="card-header">
             <h2>API Configuration</h2>
             <p class="card-subtitle">
@@ -82,22 +217,397 @@
             </div>
 
             <button
-              id="save-button"
+              id="save-api-button"
               class="btn primary"
-              aria-label="Save Settings"
+              aria-label="Save API Settings"
             >
               <span class="material-icons">save</span>
-              <span>Save Settings</span>
+              <span>Save API Settings</span>
             </button>
 
             <div
-              id="success-message"
+              id="api-success-message"
               class="success-message"
               role="alert"
               aria-live="polite"
             >
               <span class="material-icons">check_circle</span>
-              <span>Settings saved successfully!</span>
+              <span>API settings saved successfully!</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- TTS Settings Section -->
+        <div id="tts-section" class="form-card" style="display: none">
+          <div class="card-header">
+            <h2>Text-to-Speech Settings</h2>
+            <p class="card-subtitle">
+              Configure voice settings for better TTS experience
+            </p>
+          </div>
+
+          <div class="form-content">
+            <div class="input-group">
+              <label for="voice-select" class="input-label">
+                <span class="material-icons">record_voice_over</span>
+                Voice Selection
+              </label>
+              <div class="input-wrapper">
+                <select id="voice-select" aria-label="Select Voice">
+                  <option value="">Loading voices...</option>
+                </select>
+                <span class="material-icons input-icon">expand_more</span>
+              </div>
+              <p class="help-text">
+                Choose your preferred voice for text-to-speech
+              </p>
+            </div>
+
+            <div class="input-group">
+              <label for="speed-slider" class="input-label">
+                <span class="material-icons">speed</span>
+                Speech Speed
+                <span id="speed-value">1.0x</span>
+              </label>
+              <div class="slider-wrapper">
+                <input
+                  type="range"
+                  id="speed-slider"
+                  min="0.5"
+                  max="2.0"
+                  step="0.1"
+                  value="1.0"
+                  aria-label="Speech Speed"
+                />
+                <div class="slider-labels">
+                  <span>0.5x</span>
+                  <span>1.0x</span>
+                  <span>2.0x</span>
+                </div>
+              </div>
+              <p class="help-text">
+                Adjust the speed of text-to-speech playback
+              </p>
+            </div>
+
+            <div class="input-group">
+              <label class="input-label">
+                <span class="material-icons">play_circle</span>
+                Test Voice
+              </label>
+              <div class="test-voice-container">
+                <input
+                  type="text"
+                  id="test-text"
+                  placeholder="Enter text to test voice settings"
+                  value="Hello! This is a test of the text-to-speech settings."
+                />
+                <button id="test-voice-btn" class="btn secondary">
+                  <span class="material-icons">play_arrow</span>
+                  Test Voice
+                </button>
+              </div>
+              <p class="help-text">Test your voice settings with custom text</p>
+            </div>
+
+            <button
+              id="save-tts-button"
+              class="btn primary"
+              aria-label="Save TTS Settings"
+            >
+              <span class="material-icons">save</span>
+              <span>Save TTS Settings</span>
+            </button>
+
+            <div
+              id="tts-success-message"
+              class="success-message"
+              role="alert"
+              aria-live="polite"
+            >
+              <span class="material-icons">check_circle</span>
+              <span>TTS settings saved successfully!</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Help Section -->
+        <div id="help-section" class="form-card" style="display: none">
+          <div class="card-header">
+            <h2>Help & Documentation</h2>
+            <p class="card-subtitle">
+              Learn how to use SmartDigest effectively
+            </p>
+          </div>
+
+          <div class="form-content">
+            <div class="help-content">
+              <div class="help-section">
+                <h3 class="help-title">
+                  <span class="help-icon">🚀</span>
+                  Getting Started
+                </h3>
+                <ol class="help-list">
+                  <li>
+                    <strong>Click the extension icon</strong> from your browser
+                    toolbar.
+                  </li>
+                  <li>
+                    <strong>Choose your summary type</strong>: Brief, Detailed,
+                    or Bullet Points.
+                  </li>
+                  <li>
+                    Click <strong>"Summarize"</strong> to generate a summary of
+                    the current webpage.
+                  </li>
+                </ol>
+              </div>
+
+              <div class="help-divider"></div>
+
+              <div class="help-section">
+                <h3 class="help-title">
+                  <span class="help-icon">🖱️</span>
+                  On-Page Summarizer
+                </h3>
+                <ul class="help-list">
+                  <li>Select any text on a webpage.</li>
+                  <li>A "Summarize" button will appear.</li>
+                  <li>Click it to get a summary tooltip.</li>
+                </ul>
+              </div>
+
+              <div class="help-divider"></div>
+
+              <div class="help-section">
+                <h3 class="help-title">
+                  <span class="help-icon">🔊</span>
+                  Text-to-Speech (TTS)
+                </h3>
+                <ul class="help-list">
+                  <li>Click the 🎤 mic icon to read the summary aloud.</li>
+                  <li>Click ⏸ to pause, ▶️ to resume, or ⏹ to restart.</li>
+                  <li>
+                    Adjust voice, speed, and pitch in the
+                    <strong>Settings</strong> tab.
+                  </li>
+                </ul>
+              </div>
+
+              <div class="help-divider"></div>
+
+              <div class="help-section">
+                <h3 class="help-title">
+                  <span class="help-icon">✨</span>
+                  Tips
+                </h3>
+                <ul class="help-list">
+                  <li>
+                    You can copy any summary using the
+                    <strong>Copy</strong> button.
+                  </li>
+                  <li>
+                    Use the Settings page to control tooltip display, voices,
+                    and themes.
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Support Section -->
+        <div id="support-section" class="form-card" style="display: none">
+          <div class="card-header">
+            <h2>Support & Feedback</h2>
+            <p class="card-subtitle">
+              Get help and share your feedback with us
+            </p>
+          </div>
+
+          <div class="form-content">
+            <!-- FAQ Section -->
+            <div class="support-section">
+              <h3 class="support-title">
+                <span class="support-icon">❓</span>
+                Frequently Asked Questions
+              </h3>
+              <div class="faq-container">
+                <div class="faq-item">
+                  <button class="faq-question" aria-expanded="false">
+                    <span>Nothing happens when I click summarize</span>
+                    <span class="faq-icon">+</span>
+                  </button>
+                  <div class="faq-answer">
+                    <p>This usually means your Gemini API key isn't configured. Here's how to fix it:</p>
+                    <ol>
+                      <li>Go to the <strong>API Key</strong> tab in settings</li>
+                      <li>Get your API key from <a href="https://makersuite.google.com/app/apikey" target="_blank">Google AI Studio</a></li>
+                      <li>Paste the key and click "Save API Settings"</li>
+                      <li>Try summarizing again</li>
+                    </ol>
+                  </div>
+                </div>
+
+                <div class="faq-item">
+                  <button class="faq-question" aria-expanded="false">
+                    <span>My summary is empty or shows an error</span>
+                    <span class="faq-icon">+</span>
+                  </button>
+                  <div class="faq-answer">
+                    <p>This could be due to several reasons:</p>
+                    <ul>
+                      <li><strong>API Limit:</strong> You may have reached your Gemini API quota</li>
+                      <li><strong>Invalid Key:</strong> Your API key might be incorrect or expired</li>
+                      <li><strong>Network Issue:</strong> Check your internet connection</li>
+                      <li><strong>Content Too Short:</strong> Select at least 10 characters of text</li>
+                    </ul>
+                    <p>Try refreshing the page and checking your API key in settings.</p>
+                  </div>
+                </div>
+
+                <div class="faq-item">
+                  <button class="faq-question" aria-expanded="false">
+                    <span>Text-to-speech doesn't work</span>
+                    <span class="faq-icon">+</span>
+                  </button>
+                  <div class="faq-answer">
+                    <p>Text-to-speech requires browser support. Here's what to check:</p>
+                    <ul>
+                      <li><strong>Browser Support:</strong> Works best in Chrome, Edge, and Firefox</li>
+                      <li><strong>System Voices:</strong> Your system needs available voices</li>
+                      <li><strong>Permissions:</strong> Allow audio playback if prompted</li>
+                      <li><strong>Settings:</strong> Check TTS settings in the options page</li>
+                    </ul>
+                    <p>Try testing different voices in the TTS Settings tab.</p>
+                  </div>
+                </div>
+
+                <div class="faq-item">
+                  <button class="faq-question" aria-expanded="false">
+                    <span>Settings are not saving</span>
+                    <span class="faq-icon">+</span>
+                  </button>
+                  <div class="faq-answer">
+                    <p>If your settings aren't persisting, try these steps:</p>
+                    <ol>
+                      <li>Check if you're signed into Chrome with sync enabled</li>
+                      <li>Try refreshing the options page</li>
+                      <li>Check browser storage permissions</li>
+                      <li>Disable and re-enable the extension</li>
+                    </ol>
+                    <p>Settings should sync across your devices when signed into Chrome.</p>
+                  </div>
+                </div>
+
+                <div class="faq-item">
+                  <button class="faq-question" aria-expanded="false">
+                    <span>Dark mode is not working properly</span>
+                    <span class="faq-icon">+</span>
+                  </button>
+                  <div class="faq-answer">
+                    <p>Dark mode issues can be resolved by:</p>
+                    <ul>
+                      <li><strong>Theme Setting:</strong> Check your theme preference in General Settings</li>
+                      <li><strong>System Preference:</strong> Auto mode follows your OS dark mode setting</li>
+                      <li><strong>Browser Cache:</strong> Try refreshing the page or clearing cache</li>
+                      <li><strong>Extension Restart:</strong> Disable and re-enable the extension</li>
+                    </ul>
+                    <p>Dark mode applies to both the popup and options page.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Support Channels -->
+            <div class="support-section">
+              <h3 class="support-title">
+                <span class="support-icon">📞</span>
+                Get Help
+              </h3>
+              <div class="support-channels">
+                <a href="https://github.com/your-username/smartdigest/issues" target="_blank" class="support-link">
+                  <span class="support-link-icon">🐛</span>
+                  <div class="support-link-content">
+                    <span class="support-link-title">Report a Bug</span>
+                    <span class="support-link-desc">Create an issue on GitHub</span>
+                  </div>
+                  <span class="material-icons">open_in_new</span>
+                </a>
+                <a href="mailto:support@smartdigest.com" class="support-link">
+                  <span class="support-link-icon">📧</span>
+                  <div class="support-link-content">
+                    <span class="support-link-title">Email Support</span>
+                    <span class="support-link-desc">support@smartdigest.com</span>
+                  </div>
+                  <span class="material-icons">open_in_new</span>
+                </a>
+              </div>
+            </div>
+
+            <!-- Privacy & Trust -->
+            <div class="support-section">
+              <h3 class="support-title">
+                <span class="support-icon">🔒</span>
+                Privacy & Trust
+              </h3>
+              <div class="privacy-info">
+                <div class="privacy-item">
+                  <span class="material-icons">security</span>
+                  <span>We don't store or track your data</span>
+                </div>
+                <div class="privacy-item">
+                  <span class="material-icons">computer</span>
+                  <span>Everything runs locally except summaries sent securely to Gemini API</span>
+                </div>
+                <div class="privacy-item">
+                  <span class="material-icons">description</span>
+                  <a href="PRIVACY.md" target="_blank">Read our Privacy Policy</a>
+                </div>
+              </div>
+            </div>
+
+            <!-- Feedback Form -->
+            <div class="support-section">
+              <h3 class="support-title">
+                <span class="support-icon">💬</span>
+                Send Feedback
+              </h3>
+              <form id="feedback-form" class="feedback-form">
+                <div class="feedback-field">
+                  <label for="feedback-message">Your Feedback</label>
+                  <textarea 
+                    id="feedback-message" 
+                    name="message" 
+                    required 
+                    placeholder="Tell us what went wrong or what you'd like to see improved."
+                    minlength="20" 
+                    maxlength="500"
+                  ></textarea>
+                  <div class="char-counter">
+                    <span id="char-count">0</span>/500
+                  </div>
+                </div>
+                
+                <div class="feedback-field">
+                  <label for="feedback-email">Email (Optional)</label>
+                  <input 
+                    type="email" 
+                    id="feedback-email" 
+                    name="email" 
+                    placeholder="Want a reply? Leave your email"
+                  />
+                </div>
+
+                <input type="hidden" name="metadata" id="feedback-metadata" />
+                
+                <button type="submit" id="feedback-submit" class="btn primary">
+                  <span class="material-icons">send</span>
+                  <span>Send Feedback</span>
+                </button>
+
+                <div id="feedback-status" class="feedback-status"></div>
+              </form>
             </div>
           </div>
         </div>

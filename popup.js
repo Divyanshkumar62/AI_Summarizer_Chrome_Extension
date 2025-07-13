@@ -6,12 +6,15 @@ const summaryTypeSelect = document.getElementById("summary-type");
 const floatingControls = document.getElementById("floating-controls");
 const pauseBtn = document.getElementById("pause-btn");
 const stopBtn = document.getElementById("stop-btn");
+const settingsBtn = document.getElementById("settings-btn");
 
 // TTS State Management
 let isSpeaking = false;
 let isPaused = false;
 let utterance = null;
 let currentText = "";
+let ttsSettings = { voice: "Google US English", speed: 1.0 };
+let isStoppingTTS = false; // Flag to prevent error messages when stopping
 
 // Error message constants
 const ERROR_MESSAGES = {
@@ -20,12 +23,110 @@ const ERROR_MESSAGES = {
   NO_SUMMARY: "⚠️ No summary returned.",
   TTS_FAILED: "🔇 Text-to-Speech failed. Your browser may not support it.",
   TTS_NOT_SUPPORTED: "🔇 Text-to-Speech is not supported in this browser.",
+  PAUSE_NOT_SUPPORTED:
+    "⏸ Pause not supported in this browser. Click stop to restart.",
   UNKNOWN_ERROR: "❌ An unexpected error occurred. Please try again.",
 };
 
 // Check if TTS is supported
 function isTTSSupported() {
   return "speechSynthesis" in window && "SpeechSynthesisUtterance" in window;
+}
+
+// Check if pause/resume is supported
+function isPauseResumeSupported() {
+  return (
+    "speechSynthesis" in window &&
+    "pause" in speechSynthesis &&
+    "resume" in speechSynthesis
+  );
+}
+
+// Load settings from storage
+async function loadSettings() {
+  try {
+    // Load TTS settings
+    const { ttsSettings: settings } = await chrome.storage.sync.get([
+      "ttsSettings",
+    ]);
+    if (settings) {
+      ttsSettings = settings;
+      console.log("[Popup] TTS settings loaded:", ttsSettings);
+    } else {
+      console.log("[Popup] No TTS settings found, using defaults");
+    }
+
+    // Load General settings
+    const { generalSettings } = await chrome.storage.sync.get([
+      "generalSettings",
+    ]);
+    if (generalSettings) {
+      // Apply default summary type
+      if (generalSettings.defaultSummaryType) {
+        summaryTypeSelect.value = generalSettings.defaultSummaryType;
+        console.log(
+          "[Popup] Default summary type applied:",
+          generalSettings.defaultSummaryType
+        );
+      }
+
+      // Apply theme
+      if (generalSettings.theme) {
+        applyTheme(generalSettings.theme);
+        console.log("[Popup] Theme applied:", generalSettings.theme);
+      }
+    } else {
+      console.log("[Popup] No general settings found, using defaults");
+    }
+  } catch (error) {
+    console.error("[Popup] Error loading settings:", error);
+  }
+}
+
+// Theme Management
+function applyTheme(theme) {
+  const root = document.documentElement;
+
+  // Remove existing theme attributes
+  root.removeAttribute("data-theme");
+
+  if (theme === "dark") {
+    root.setAttribute("data-theme", "dark");
+  } else if (theme === "auto") {
+    // Check system preference
+    if (
+      window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches
+    ) {
+      root.setAttribute("data-theme", "dark");
+    }
+  }
+  // Light theme is default, no attribute needed
+}
+
+// Wait for voices to be available
+function waitForVoices() {
+  return new Promise((resolve) => {
+    const voices = speechSynthesis.getVoices();
+    if (voices.length > 0) {
+      resolve(voices);
+    } else {
+      speechSynthesis.onvoiceschanged = () => {
+        resolve(speechSynthesis.getVoices());
+      };
+    }
+  });
+}
+
+// Get the correct voice based on settings
+function getVoiceFromSettings(voices) {
+  if (ttsSettings.voice === "Google US English") {
+    return (
+      voices.find((v) => v.name.includes("Google US English")) || voices[0]
+    );
+  } else {
+    return voices.find((v) => v.name === ttsSettings.voice) || voices[0];
+  }
 }
 
 // Safe text content assignment (XSS protection)
@@ -35,9 +136,10 @@ function setTextContent(element, text) {
   }
 }
 
-// Show error message
+// Show error message (without replacing summary)
 function showError(message) {
-  setTextContent(resultDiv, message);
+  // Don't replace summary text with error messages
+  console.error("[Popup] Error:", message);
 }
 
 // Show loading message
@@ -45,8 +147,15 @@ function showLoading() {
   setTextContent(resultDiv, "Summarizing...");
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   try {
+    // Load settings first
+    await loadSettings();
+
+    // Preload voices so they're available immediately
+    await waitForVoices();
+    console.log("[Popup] Voices preloaded successfully");
+
     summarizeBtn.addEventListener("click", async () => {
       try {
         console.log("[Popup] Summarize button clicked");
@@ -189,6 +298,9 @@ function showFloatingControls() {
   try {
     floatingControls.classList.add("visible");
     speakBtn.classList.add("disabled");
+
+    // Update pause button based on browser support
+    updatePauseButtonSupport();
   } catch (error) {
     console.error("[Popup] Error showing floating controls:", error);
   }
@@ -198,15 +310,42 @@ function hideFloatingControls() {
   try {
     floatingControls.classList.remove("visible");
     speakBtn.classList.remove("disabled");
+
+    // If we're hiding controls and not speaking, clear the state
+    if (!isSpeaking) {
+      currentText = "";
+      utterance = null;
+    }
   } catch (error) {
     console.error("[Popup] Error hiding floating controls:", error);
+  }
+}
+
+function updatePauseButtonSupport() {
+  try {
+    const pauseIcon = pauseBtn.querySelector(".floating-icon");
+    if (!isPauseResumeSupported()) {
+      pauseIcon.textContent = "⏸";
+      pauseBtn.title = ERROR_MESSAGES.PAUSE_NOT_SUPPORTED;
+      pauseBtn.classList.add("disabled");
+      pauseBtn.style.opacity = "0.5";
+      pauseBtn.style.cursor = "not-allowed";
+    } else {
+      pauseBtn.title = "Pause/Resume";
+      pauseBtn.classList.remove("disabled");
+      pauseBtn.style.opacity = "1";
+      pauseBtn.style.cursor = "pointer";
+      updatePauseButtonIcon();
+    }
+  } catch (error) {
+    console.error("[Popup] Error updating pause button support:", error);
   }
 }
 
 function updatePauseButtonIcon() {
   try {
     const pauseIcon = pauseBtn.querySelector(".floating-icon");
-    if (pauseIcon) {
+    if (pauseIcon && isPauseResumeSupported()) {
       pauseIcon.textContent = isPaused ? "▶️" : "⏸";
     }
   } catch (error) {
@@ -214,7 +353,7 @@ function updatePauseButtonIcon() {
   }
 }
 
-function startTTS(text) {
+async function startTTS(text) {
   try {
     if (!text || isSpeaking) return;
 
@@ -230,48 +369,67 @@ function startTTS(text) {
     currentText = text;
     utterance = new SpeechSynthesisUtterance(text);
 
-    // Get available voices
-    const voices = speechSynthesis.getVoices();
-    utterance.voice =
-      voices.find((v) => v.name.includes("Google US English")) || voices[0];
-    utterance.rate = 1;
+    // Wait for voices to be available and apply TTS settings
+    const voices = await waitForVoices();
+    console.log(
+      "[Popup] Available voices:",
+      voices.map((v) => v.name)
+    );
+    console.log("[Popup] Using TTS settings:", ttsSettings);
+
+    // Get the correct voice based on settings
+    const selectedVoice = getVoiceFromSettings(voices);
+    utterance.voice = selectedVoice;
+    console.log("[Popup] Selected voice:", selectedVoice?.name);
+
+    utterance.rate = ttsSettings.speed;
     utterance.pitch = 1.1;
 
     utterance.onend = () => {
-      isSpeaking = false;
-      isPaused = false;
-      hideFloatingControls();
-      // Ensure microphone button is re-enabled
-      speakBtn.classList.remove("disabled");
+      if (!isStoppingTTS) {
+        isSpeaking = false;
+        isPaused = false;
+        hideFloatingControls();
+        // Ensure microphone button is re-enabled
+        speakBtn.classList.remove("disabled");
+      }
     };
 
     utterance.onpause = () => {
-      isPaused = true;
-      updatePauseButtonIcon();
+      if (!isStoppingTTS) {
+        isPaused = true;
+        updatePauseButtonIcon();
+      }
     };
 
     utterance.onresume = () => {
-      isPaused = false;
-      updatePauseButtonIcon();
+      if (!isStoppingTTS) {
+        isPaused = false;
+        updatePauseButtonIcon();
+      }
     };
 
     utterance.onerror = (event) => {
-      console.error("[Popup] TTS Error:", event);
-      isSpeaking = false;
-      isPaused = false;
-      hideFloatingControls();
-      showError(ERROR_MESSAGES.TTS_FAILED);
+      if (!isStoppingTTS) {
+        console.error("[Popup] TTS Error:", event);
+        isSpeaking = false;
+        isPaused = false;
+        hideFloatingControls();
+        showError(ERROR_MESSAGES.TTS_FAILED);
+      }
     };
 
     speechSynthesis.speak(utterance);
     isSpeaking = true;
     isPaused = false;
+    isStoppingTTS = false;
     showFloatingControls();
     updatePauseButtonIcon();
   } catch (error) {
     console.error("[Popup] TTS start error:", error);
     isSpeaking = false;
     isPaused = false;
+    isStoppingTTS = false;
     hideFloatingControls();
     showError(ERROR_MESSAGES.TTS_FAILED);
   }
@@ -279,7 +437,7 @@ function startTTS(text) {
 
 function pauseResumeTTS() {
   try {
-    if (!isSpeaking) return;
+    if (!isSpeaking || !isPauseResumeSupported()) return;
 
     if (isPaused) {
       speechSynthesis.resume();
@@ -296,25 +454,39 @@ function stopTTS() {
   try {
     if (!isSpeaking) return;
 
+    // Set flag to prevent error messages
+    isStoppingTTS = true;
+
     speechSynthesis.cancel();
     isSpeaking = false;
     isPaused = false;
     hideFloatingControls();
 
-    // Restart TTS from beginning
-    if (currentText) {
-      setTimeout(() => startTTS(currentText), 100);
-    }
+    // Clear current text and utterance
+    currentText = "";
+    utterance = null;
+
+    // Ensure microphone button is re-enabled
+    speakBtn.classList.remove("disabled");
+
+    // Reset flag after a short delay
+    setTimeout(() => {
+      isStoppingTTS = false;
+    }, 100);
   } catch (error) {
     console.error("[Popup] TTS stop error:", error);
     isSpeaking = false;
     isPaused = false;
+    isStoppingTTS = false;
     hideFloatingControls();
+    currentText = "";
+    utterance = null;
+    speakBtn.classList.remove("disabled");
   }
 }
 
 // Event Listeners
-speakBtn.addEventListener("click", (e) => {
+speakBtn.addEventListener("click", async (e) => {
   try {
     e.stopPropagation();
 
@@ -322,6 +494,9 @@ speakBtn.addEventListener("click", (e) => {
     if (speakBtn.classList.contains("disabled")) {
       return;
     }
+
+    // Reload settings to ensure we have the latest
+    await loadSettings();
 
     const text = resultDiv.textContent.trim();
 
@@ -338,6 +513,12 @@ speakBtn.addEventListener("click", (e) => {
 pauseBtn.addEventListener("click", (e) => {
   try {
     e.stopPropagation();
+
+    // Don't allow clicks if pause is not supported
+    if (!isPauseResumeSupported()) {
+      return;
+    }
+
     pauseResumeTTS();
   } catch (error) {
     console.error("[Popup] Pause button click error:", error);
@@ -353,6 +534,16 @@ stopBtn.addEventListener("click", (e) => {
   }
 });
 
+// Settings button event listener
+settingsBtn.addEventListener("click", () => {
+  try {
+    console.log("[Popup] Settings button clicked, opening options page");
+    chrome.runtime.openOptionsPage();
+  } catch (error) {
+    console.error("[Popup] Error opening options page:", error);
+  }
+});
+
 // Outside click detection
 document.addEventListener("click", (e) => {
   try {
@@ -361,7 +552,7 @@ document.addEventListener("click", (e) => {
 
     if (isSpeaking && !isClickInsideControls && !isClickOnSpeakBtn) {
       hideFloatingControls();
-      // Don't stop TTS, just hide controls
+      // Don't stop TTS, just hide controls - TTS continues in background
     }
   } catch (error) {
     console.error("[Popup] Outside click detection error:", error);

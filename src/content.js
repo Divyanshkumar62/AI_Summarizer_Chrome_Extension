@@ -96,9 +96,29 @@ chrome.runtime.onMessage.addListener((req, _sender, sendResponse) => {
   }
 });
 
-document.addEventListener("mouseup", (e) => {
+// Check if tooltip is enabled
+async function isTooltipEnabled() {
+  try {
+    const { generalSettings } = await chrome.storage.sync.get([
+      "generalSettings",
+    ]);
+    return generalSettings?.enableTooltip !== false; // Default to true if not set
+  } catch (error) {
+    console.error("[Content] Error checking tooltip setting:", error);
+    return true; // Default to enabled on error
+  }
+}
+
+document.addEventListener("mouseup", async (e) => {
   try {
     if (e.target === summarizeBtn) {
+      return;
+    }
+
+    // Check if tooltip is enabled
+    const tooltipEnabled = await isTooltipEnabled();
+    if (!tooltipEnabled) {
+      removeSummarizeButton();
       return;
     }
 
@@ -107,7 +127,7 @@ document.addEventListener("mouseup", (e) => {
       // console.log("[Content Script] Text selected--", selectedText);
       const range = window.getSelection().getRangeAt(0);
       const rect = range.getBoundingClientRect();
-      showSummarizeButton(rect, selectedText);
+      await showSummarizeButton(rect, selectedText);
     } else {
       removeSummarizeButton();
     }
@@ -117,12 +137,19 @@ document.addEventListener("mouseup", (e) => {
   }
 });
 
-function showSummarizeButton(rect, selectedText) {
+async function showSummarizeButton(rect, selectedText) {
   try {
     removeSummarizeButton();
 
     summarizeBtn = document.createElement("button");
     summarizeBtn.className = "gemini-summarize-btn";
+
+    // Apply dark mode if enabled
+    const darkMode = await isDarkMode();
+    if (darkMode) {
+      summarizeBtn.classList.add("dark");
+    }
+
     setTextContent(summarizeBtn, "✨ Summarize");
 
     Object.assign(summarizeBtn.style, {
@@ -158,9 +185,9 @@ function showSummarizeButton(rect, selectedText) {
       summarizeBtn.style.boxShadow = "0 4px 12px rgba(74, 144, 226, 0.2)";
     };
 
-    summarizeBtn.onclick = () => {
+    summarizeBtn.onclick = async () => {
       try {
-        showLoadingTooltip();
+        await showLoadingTooltip();
 
         chrome.runtime.sendMessage(
           {
@@ -183,10 +210,10 @@ function showSummarizeButton(rect, selectedText) {
 
               // console.log("[Content Script] Got response from background:", response);
 
-              if (response) {
-                showSummaryTooltip(response);
+                      if (response) {
+          await showSummaryTooltip(response);
               } else {
-                showSummaryTooltip(ERROR_MESSAGES.UNKNOWN_ERROR);
+                await showSummaryTooltip(ERROR_MESSAGES.UNKNOWN_ERROR);
               }
             } catch (error) {
               console.error("[Content] Response handling error:", error);
@@ -219,12 +246,18 @@ function removeSummarizeButton() {
   }
 }
 
-function showSummaryTooltip(summary) {
+async function showSummaryTooltip(summary) {
   try {
     removeSummaryTooltip();
 
     summaryTooltip = document.createElement("div");
     summaryTooltip.className = "gemini-summary-tooltip";
+
+    // Apply dark mode if enabled
+    const darkMode = await isDarkMode();
+    if (darkMode) {
+      summaryTooltip.classList.add("dark");
+    }
     Object.assign(summaryTooltip.style, {
       position: "fixed",
       top: "50%",
@@ -344,12 +377,18 @@ function showSummaryTooltip(summary) {
   }
 }
 
-function showLoadingTooltip() {
+async function showLoadingTooltip() {
   try {
     removeSummaryTooltip();
 
     summaryTooltip = document.createElement("div");
     summaryTooltip.className = "gemini-summary-tooltip loading";
+
+    // Apply dark mode if enabled
+    const darkMode = await isDarkMode();
+    if (darkMode) {
+      summaryTooltip.classList.add("dark");
+    }
     Object.assign(summaryTooltip.style, {
       position: "fixed",
       top: "50%",
@@ -406,38 +445,98 @@ function removeSummaryTooltip() {
   }
 }
 
+// Check if dark mode is enabled
+async function isDarkMode() {
+  try {
+    const { generalSettings } = await chrome.storage.sync.get([
+      "generalSettings",
+    ]);
+    if (!generalSettings?.theme) return false;
+
+    if (generalSettings.theme === "dark") return true;
+    if (generalSettings.theme === "auto") {
+      return (
+        window.matchMedia &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches
+      );
+    }
+    return false;
+  } catch (error) {
+    console.error("[Content] Error checking dark mode:", error);
+    return false;
+  }
+}
+
 // Add keyframes for animations
 try {
   const style = document.createElement("style");
   setTextContent(
     style,
     `
-    @keyframes buttonAppear {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+  @keyframes buttonAppear {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
     }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 
-    @keyframes tooltipAppear {
-      from {
-        opacity: 0;
-        transform: translate(-50%, -48%);
-      }
-      to {
-        opacity: 1;
-        transform: translate(-50%, -50%);
-      }
+  @keyframes tooltipAppear {
+    from {
+      opacity: 0;
+      transform: translate(-50%, -48%);
     }
+    to {
+      opacity: 1;
+      transform: translate(-50%, -50%);
+    }
+  }
 
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  /* Dark mode styles for content script elements */
+  .gemini-summarize-btn.dark {
+    background: linear-gradient(135deg, #58a6ff, #1f6feb) !important;
+    color: #f0f6fc !important;
+    box-shadow: 0 4px 12px rgba(88, 166, 255, 0.3) !important;
+  }
+
+  .gemini-summarize-btn.dark:hover {
+    box-shadow: 0 6px 16px rgba(88, 166, 255, 0.4) !important;
+  }
+
+  .gemini-summary-tooltip.dark {
+    background-color: #161b22 !important;
+    border: 1px solid #30363d !important;
+    color: #f0f6fc !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+  }
+
+  .gemini-summary-tooltip.dark button {
+    background-color: #21262d !important;
+    color: #f0f6fc !important;
+    border-color: #30363d !important;
+  }
+
+  .gemini-summary-tooltip.dark button:hover {
+    background-color: #30363d !important;
+    border-color: #58a6ff !important;
+  }
+
+  .gemini-summary-tooltip.dark button:first-child {
+    background-color: #58a6ff !important;
+    color: #f0f6fc !important;
+  }
+
+  .gemini-summary-tooltip.dark button:first-child:hover {
+    background-color: #79c0ff !important;
+  }
   `
   );
   document.head.appendChild(style);
