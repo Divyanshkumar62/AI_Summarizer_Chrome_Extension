@@ -427,187 +427,281 @@
 
           <div class="form-content">
             <!-- FAQ Section -->
-            <div class="support-section">
-              <h3 class="support-title">
-                <span class="support-icon">❓</span>
-                Frequently Asked Questions
-              </h3>
-              <div class="faq-container">
-                <div class="faq-item">
-                  <button class="faq-question" aria-expanded="false">
-                    <span>Nothing happens when I click summarize</span>
-                    <span class="faq-icon">+</span>
-                  </button>
-                  <div class="faq-answer">
-                    <p>This usually means your Gemini API key isn't configured. Here's how to fix it:</p>
-                    <ol>
-                      <li>Go to the <strong>API Key</strong> tab in settings</li>
-                      <li>Get your API key from <a href="https://makersuite.google.com/app/apikey" target="_blank">Google AI Studio</a></li>
-                      <li>Paste the key and click "Save API Settings"</li>
-                      <li>Try summarizing again</li>
-                    </ol>
+            <div class="support-accordion">
+              <button class="accordion-header" aria-expanded="false">
+                <span class="accordion-icon">❓</span>
+                <span class="accordion-title">FAQ</span>
+                <span class="accordion-toggle">▼</span>
+              </button>
+              <div class="accordion-content">
+                <div class="faq-container">
+                  <div class="faq-item">
+                    <button class="faq-question" aria-expanded="false">
+                      <span>Nothing happens when I click summarize</span>
+                      <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-answer">
+                      <p>
+                        This usually means your Gemini API key isn't configured.
+                        Here's how to fix it:
+                      </p>
+                      <ol>
+                        <li>
+                          Go to the <strong>API Key</strong> tab in settings
+                        </li>
+                        <li>
+                          Get your API key from
+                          <a
+                            href="https://makersuite.google.com/app/apikey"
+                            target="_blank"
+                            >Google AI Studio</a
+                          >
+                        </li>
+                        <li>Paste the key and click "Save API Settings"</li>
+                        <li>Try summarizing again</li>
+                      </ol>
+                    </div>
                   </div>
-                </div>
 
-                <div class="faq-item">
-                  <button class="faq-question" aria-expanded="false">
-                    <span>My summary is empty or shows an error</span>
-                    <span class="faq-icon">+</span>
-                  </button>
-                  <div class="faq-answer">
-                    <p>This could be due to several reasons:</p>
-                    <ul>
-                      <li><strong>API Limit:</strong> You may have reached your Gemini API quota</li>
-                      <li><strong>Invalid Key:</strong> Your API key might be incorrect or expired</li>
-                      <li><strong>Network Issue:</strong> Check your internet connection</li>
-                      <li><strong>Content Too Short:</strong> Select at least 10 characters of text</li>
-                    </ul>
-                    <p>Try refreshing the page and checking your API key in settings.</p>
+                  <div class="faq-item">
+                    <button class="faq-question" aria-expanded="false">
+                      <span>My summary is empty or shows an error</span>
+                      <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-answer">
+                      <p>This could be due to several reasons:</p>
+                      <ul>
+                        <li>
+                          <strong>API Limit:</strong> You may have reached your
+                          Gemini API quota
+                        </li>
+                        <li>
+                          <strong>Invalid Key:</strong> Your API key might be
+                          incorrect or expired
+                        </li>
+                        <li>
+                          <strong>Network Issue:</strong> Check your internet
+                          connection
+                        </li>
+                        <li>
+                          <strong>Content Too Short:</strong> Select at least 10
+                          characters of text
+                        </li>
+                      </ul>
+                      <p>
+                        Try refreshing the page and checking your API key in
+                        settings.
+                      </p>
+                    </div>
                   </div>
-                </div>
 
-                <div class="faq-item">
-                  <button class="faq-question" aria-expanded="false">
-                    <span>Text-to-speech doesn't work</span>
-                    <span class="faq-icon">+</span>
-                  </button>
-                  <div class="faq-answer">
-                    <p>Text-to-speech requires browser support. Here's what to check:</p>
-                    <ul>
-                      <li><strong>Browser Support:</strong> Works best in Chrome, Edge, and Firefox</li>
-                      <li><strong>System Voices:</strong> Your system needs available voices</li>
-                      <li><strong>Permissions:</strong> Allow audio playback if prompted</li>
-                      <li><strong>Settings:</strong> Check TTS settings in the options page</li>
-                    </ul>
-                    <p>Try testing different voices in the TTS Settings tab.</p>
+                  <div class="faq-item">
+                    <button class="faq-question" aria-expanded="false">
+                      <span>Text-to-speech doesn't work</span>
+                      <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-answer">
+                      <p>
+                        Text-to-speech requires browser support. Here's what to
+                        check:
+                      </p>
+                      <ul>
+                        <li>
+                          <strong>Browser Support:</strong> Works best in
+                          Chrome, Edge, and Firefox
+                        </li>
+                        <li>
+                          <strong>System Voices:</strong> Your system needs
+                          available voices
+                        </li>
+                        <li>
+                          <strong>Permissions:</strong> Allow audio playback if
+                          prompted
+                        </li>
+                        <li>
+                          <strong>Settings:</strong> Check TTS settings in the
+                          options page
+                        </li>
+                      </ul>
+                      <p>
+                        Try testing different voices in the TTS Settings tab.
+                      </p>
+                    </div>
                   </div>
-                </div>
 
-                <div class="faq-item">
-                  <button class="faq-question" aria-expanded="false">
-                    <span>Settings are not saving</span>
-                    <span class="faq-icon">+</span>
-                  </button>
-                  <div class="faq-answer">
-                    <p>If your settings aren't persisting, try these steps:</p>
-                    <ol>
-                      <li>Check if you're signed into Chrome with sync enabled</li>
-                      <li>Try refreshing the options page</li>
-                      <li>Check browser storage permissions</li>
-                      <li>Disable and re-enable the extension</li>
-                    </ol>
-                    <p>Settings should sync across your devices when signed into Chrome.</p>
+                  <div class="faq-item">
+                    <button class="faq-question" aria-expanded="false">
+                      <span>Settings are not saving</span>
+                      <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-answer">
+                      <p>
+                        If your settings aren't persisting, try these steps:
+                      </p>
+                      <ol>
+                        <li>
+                          Check if you're signed into Chrome with sync enabled
+                        </li>
+                        <li>Try refreshing the options page</li>
+                        <li>Check browser storage permissions</li>
+                        <li>Disable and re-enable the extension</li>
+                      </ol>
+                      <p>
+                        Settings should sync across your devices when signed
+                        into Chrome.
+                      </p>
+                    </div>
                   </div>
-                </div>
 
-                <div class="faq-item">
-                  <button class="faq-question" aria-expanded="false">
-                    <span>Dark mode is not working properly</span>
-                    <span class="faq-icon">+</span>
-                  </button>
-                  <div class="faq-answer">
-                    <p>Dark mode issues can be resolved by:</p>
-                    <ul>
-                      <li><strong>Theme Setting:</strong> Check your theme preference in General Settings</li>
-                      <li><strong>System Preference:</strong> Auto mode follows your OS dark mode setting</li>
-                      <li><strong>Browser Cache:</strong> Try refreshing the page or clearing cache</li>
-                      <li><strong>Extension Restart:</strong> Disable and re-enable the extension</li>
-                    </ul>
-                    <p>Dark mode applies to both the popup and options page.</p>
+                  <div class="faq-item">
+                    <button class="faq-question" aria-expanded="false">
+                      <span>Dark mode is not working properly</span>
+                      <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-answer">
+                      <p>Dark mode issues can be resolved by:</p>
+                      <ul>
+                        <li>
+                          <strong>Theme Setting:</strong> Check your theme
+                          preference in General Settings
+                        </li>
+                        <li>
+                          <strong>System Preference:</strong> Auto mode follows
+                          your OS dark mode setting
+                        </li>
+                        <li>
+                          <strong>Browser Cache:</strong> Try refreshing the
+                          page or clearing cache
+                        </li>
+                        <li>
+                          <strong>Extension Restart:</strong> Disable and
+                          re-enable the extension
+                        </li>
+                      </ul>
+                      <p>
+                        Dark mode applies to both the popup and options page.
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
             <!-- Support Channels -->
-            <div class="support-section">
-              <h3 class="support-title">
-                <span class="support-icon">📞</span>
-                Get Help
-              </h3>
-              <div class="support-channels">
-                <a href="https://github.com/your-username/smartdigest/issues" target="_blank" class="support-link">
-                  <span class="support-link-icon">🐛</span>
-                  <div class="support-link-content">
-                    <span class="support-link-title">Report a Bug</span>
-                    <span class="support-link-desc">Create an issue on GitHub</span>
-                  </div>
-                  <span class="material-icons">open_in_new</span>
-                </a>
-                <a href="mailto:support@smartdigest.com" class="support-link">
-                  <span class="support-link-icon">📧</span>
-                  <div class="support-link-content">
-                    <span class="support-link-title">Email Support</span>
-                    <span class="support-link-desc">support@smartdigest.com</span>
-                  </div>
-                  <span class="material-icons">open_in_new</span>
-                </a>
+            <div class="support-accordion">
+              <button class="accordion-header" aria-expanded="false">
+                <span class="accordion-icon">📞</span>
+                <span class="accordion-title">Get Help</span>
+                <span class="accordion-toggle">▼</span>
+              </button>
+              <div class="accordion-content">
+                <div class="support-channels">
+                  <a
+                    href="https://github.com/your-username/smartdigest/issues"
+                    target="_blank"
+                    class="support-link"
+                  >
+                    <span class="support-link-icon">🐛</span>
+                    <div class="support-link-content">
+                      <span class="support-link-title">Report a Bug</span>
+                      <span class="support-link-desc"
+                        >Create an issue on GitHub</span
+                      >
+                    </div>
+                    <span class="material-icons">open_in_new</span>
+                  </a>
+                  <a href="mailto:support@smartdigest.com" class="support-link">
+                    <span class="support-link-icon">📧</span>
+                    <div class="support-link-content">
+                      <span class="support-link-title">Email Support</span>
+                      <span class="support-link-desc"
+                        >support@smartdigest.com</span
+                      >
+                    </div>
+                    <span class="material-icons">open_in_new</span>
+                  </a>
+                </div>
               </div>
             </div>
 
             <!-- Privacy & Trust -->
-            <div class="support-section">
-              <h3 class="support-title">
-                <span class="support-icon">🔒</span>
-                Privacy & Trust
-              </h3>
-              <div class="privacy-info">
-                <div class="privacy-item">
-                  <span class="material-icons">security</span>
-                  <span>We don't store or track your data</span>
-                </div>
-                <div class="privacy-item">
-                  <span class="material-icons">computer</span>
-                  <span>Everything runs locally except summaries sent securely to Gemini API</span>
-                </div>
-                <div class="privacy-item">
-                  <span class="material-icons">description</span>
-                  <a href="PRIVACY.md" target="_blank">Read our Privacy Policy</a>
+            <div class="support-accordion">
+              <button class="accordion-header" aria-expanded="false">
+                <span class="accordion-icon">🔒</span>
+                <span class="accordion-title">Privacy & Trust</span>
+                <span class="accordion-toggle">▼</span>
+              </button>
+              <div class="accordion-content">
+                <div class="privacy-info">
+                  <div class="privacy-item">
+                    <span class="material-icons">security</span>
+                    <span>We don't store or track your data</span>
+                  </div>
+                  <div class="privacy-item">
+                    <span class="material-icons">computer</span>
+                    <span
+                      >Everything runs locally except summaries sent securely to
+                      Gemini API</span
+                    >
+                  </div>
+                  <div class="privacy-item">
+                    <span class="material-icons">description</span>
+                    <a href="PRIVACY.md" target="_blank"
+                      >Read our Privacy Policy</a
+                    >
+                  </div>
                 </div>
               </div>
             </div>
 
             <!-- Feedback Form -->
-            <div class="support-section">
-              <h3 class="support-title">
-                <span class="support-icon">💬</span>
-                Send Feedback
-              </h3>
-              <form id="feedback-form" class="feedback-form">
-                <div class="feedback-field">
-                  <label for="feedback-message">Your Feedback</label>
-                  <textarea 
-                    id="feedback-message" 
-                    name="message" 
-                    required 
-                    placeholder="Tell us what went wrong or what you'd like to see improved."
-                    minlength="20" 
-                    maxlength="500"
-                  ></textarea>
-                  <div class="char-counter">
-                    <span id="char-count">0</span>/500
+            <div class="support-accordion">
+              <button class="accordion-header" aria-expanded="false">
+                <span class="accordion-icon">💬</span>
+                <span class="accordion-title">Send Feedback</span>
+                <span class="accordion-toggle">▼</span>
+              </button>
+              <div class="accordion-content">
+                <form id="feedback-form" class="feedback-form">
+                  <div class="feedback-field">
+                    <label for="feedback-message">Your Feedback</label>
+                    <textarea
+                      id="feedback-message"
+                      name="message"
+                      required
+                      placeholder="Tell us what went wrong or what you'd like to see improved."
+                      minlength="20"
+                      maxlength="500"
+                    ></textarea>
+                    <div class="char-counter">
+                      <span id="char-count">0</span>/500
+                    </div>
                   </div>
-                </div>
-                
-                <div class="feedback-field">
-                  <label for="feedback-email">Email (Optional)</label>
-                  <input 
-                    type="email" 
-                    id="feedback-email" 
-                    name="email" 
-                    placeholder="Want a reply? Leave your email"
-                  />
-                </div>
 
-                <input type="hidden" name="metadata" id="feedback-metadata" />
-                
-                <button type="submit" id="feedback-submit" class="btn primary">
-                  <span class="material-icons">send</span>
-                  <span>Send Feedback</span>
-                </button>
+                  <div class="feedback-field">
+                    <label for="feedback-email">Email (Optional)</label>
+                    <input
+                      type="email"
+                      id="feedback-email"
+                      name="email"
+                      placeholder="Want a reply? Leave your email"
+                    />
+                  </div>
 
-                <div id="feedback-status" class="feedback-status"></div>
-              </form>
+                  <input type="hidden" name="metadata" id="feedback-metadata" />
+
+                  <button
+                    type="submit"
+                    id="feedback-submit"
+                    class="btn primary"
+                  >
+                    <span class="material-icons">send</span>
+                    <span>Send Feedback</span>
+                  </button>
+
+                  <div id="feedback-status" class="feedback-status"></div>
+                </form>
+              </div>
             </div>
           </div>
         </div>

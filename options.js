@@ -37,6 +37,7 @@ const feedbackSubmit = document.getElementById("feedback-submit");
 const feedbackStatus = document.getElementById("feedback-status");
 const charCount = document.getElementById("char-count");
 const faqQuestions = document.querySelectorAll(".faq-question");
+const accordionHeaders = document.querySelectorAll(".accordion-header");
 
 // TTS Settings Elements
 const voiceSelect = document.getElementById("voice-select");
@@ -480,6 +481,26 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (!isExpanded) {
           question.setAttribute("aria-expanded", "true");
           answer.classList.add("active");
+        }
+      });
+    });
+
+    // Accordion functionality
+    accordionHeaders.forEach((header) => {
+      header.addEventListener("click", () => {
+        const isExpanded = header.getAttribute("aria-expanded") === "true";
+        const content = header.nextElementSibling;
+
+        // Close all other accordion items
+        accordionHeaders.forEach((h) => {
+          h.setAttribute("aria-expanded", "false");
+          h.nextElementSibling.classList.remove("expanded");
+        });
+
+        // Toggle current item
+        if (!isExpanded) {
+          header.setAttribute("aria-expanded", "true");
+          content.classList.add("expanded");
         }
       });
     });

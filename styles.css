@@ -368,6 +368,21 @@ body {
   .form-content {
     padding: 20px;
   }
+
+  /* Mobile accordion adjustments */
+  .accordion-header {
+    padding: 14px 16px;
+    font-size: 15px;
+  }
+
+  .accordion-content > * {
+    padding: 20px;
+    padding-top: 0;
+  }
+
+  .support-accordion {
+    margin-bottom: 12px;
+  }
 }
 
 /* Popup styles */
@@ -1831,4 +1846,124 @@ input:checked + .toggle-slider:before {
 [data-theme="dark"] .feedback-field input:focus {
   border-color: #58a6ff;
   box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+}
+
+/* Support Accordion Styles */
+.support-accordion {
+  margin-bottom: 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.support-accordion:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+.accordion-header {
+  width: 100%;
+  padding: 16px 20px;
+  background: var(--bg-primary);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.accordion-header:hover {
+  background: var(--bg-secondary);
+}
+
+.accordion-header[aria-expanded="true"] {
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.accordion-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.accordion-title {
+  flex: 1;
+  text-align: left;
+}
+
+.accordion-toggle {
+  font-size: 12px;
+  color: var(--text-secondary);
+  transition: transform 0.3s ease;
+  flex-shrink: 0;
+}
+
+.accordion-header[aria-expanded="true"] .accordion-toggle {
+  transform: rotate(180deg);
+}
+
+.accordion-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  background: var(--bg-primary);
+}
+
+.accordion-content.expanded {
+  max-height: 2000px;
+}
+
+.accordion-content > * {
+  padding: 24px;
+  padding-top: 0;
+}
+
+/* Specific padding adjustments for different content types */
+.accordion-content .faq-container {
+  padding: 0;
+}
+
+.accordion-content .support-channels {
+  padding: 0;
+}
+
+.accordion-content .privacy-info {
+  padding: 0;
+}
+
+.accordion-content .feedback-form {
+  padding: 0;
+}
+
+/* Dark mode styles for accordion */
+[data-theme="dark"] .support-accordion {
+  border-color: #30363d;
+}
+
+[data-theme="dark"] .accordion-header {
+  background: #161b22;
+  color: #f0f6fc;
+}
+
+[data-theme="dark"] .accordion-header:hover {
+  background: #21262d;
+}
+
+[data-theme="dark"] .accordion-header[aria-expanded="true"] {
+  background: #21262d;
+  border-bottom-color: #30363d;
+}
+
+[data-theme="dark"] .accordion-content {
+  background: #161b22;
+}
+
+[data-theme="dark"] .accordion-toggle {
+  color: #8b949e;
 }
