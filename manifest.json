@@ -1,0 +1,42 @@
+{
+  "manifest_version": 3,
+  "name": "AI Summarizer",
+  "version": "1.0",
+  "description": "Summarizes text from articles and selections using Gemini.",
+  "permissions": ["storage", "activeTab", "tabs", "scripting", "contextMenus"],
+  "host_permissions": ["<all_urls>"],
+  "action": {
+    "default_popup": "public/popup.html",
+    "default_icon": {
+      "16": "icon.png",
+      "48": "icon.png",
+      "128": "icon.png"
+    }
+  },
+  "background": {
+    "service_worker": "src/background/background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["src/content/content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "options_page": "public/options.html",
+  "icons": {
+    "16": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["microphone.png"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
