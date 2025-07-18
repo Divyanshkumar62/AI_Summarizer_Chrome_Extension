@@ -160,7 +160,7 @@ const Popup: React.FC = () => {
     try {
       console.log("[Popup] Summarize button clicked");
       setIsLoading(true);
-      setResult("Summarizing...");
+      // Don't set result text - let the spinner show instead
 
       const [tab] = await chrome.tabs.query({
         active: true,
@@ -220,39 +220,101 @@ const Popup: React.FC = () => {
 
       // (Removed: API key check in popup. Let background handle it.)
       console.log("[Popup] Sending summarization request...");
-      const summary = await Promise.race([
-        new Promise<string>((resolve, reject) => {
-          chrome.runtime.sendMessage(
-            {
-              action: "summarize_text",
-              text,
-              summaryType,
-              showTooltip: false,
-            },
-            (response) => {
-              if (chrome.runtime.lastError) {
-                console.error("[Popup] Runtime error:", chrome.runtime.lastError);
+
+      // Use a simpler approach with timeout that can be cleared
+      const summary = await new Promise<string>((resolve, reject) => {
+        console.log("[Popup] Setting up message listener...");
+
+        let isResolved = false; // Flag to prevent multiple resolutions
+
+        // Set up timeout
+        const timeoutId = setTimeout(() => {
+          console.log("[Popup] Timeout triggered, isResolved:", isResolved);
+          if (!isResolved) {
+            console.log("[Popup] Setting isResolved to true and rejecting");
+            isResolved = true;
+            reject(new Error("Request timed out. Please try again."));
+          } else {
+            console.log("[Popup] Already resolved, ignoring timeout");
+          }
+        }, 25000);
+
+        chrome.runtime.sendMessage(
+          {
+            action: "summarize_text",
+            text,
+            summaryType,
+            showTooltip: false,
+          },
+          (response) => {
+            console.log(
+              "[Popup] Message callback triggered, response:",
+              response
+            );
+
+            // Clear the timeout since we got a response
+            clearTimeout(timeoutId);
+
+            // Check if popup is still open
+            if (!document.body) {
+              console.log("[Popup] Popup window closed, ignoring response");
+              return;
+            }
+
+            // Prevent multiple resolutions
+            if (isResolved) {
+              console.log("[Popup] Already resolved, ignoring response");
+              return;
+            }
+
+            if (chrome.runtime.lastError) {
+              console.error("[Popup] Runtime error:", chrome.runtime.lastError);
+              if (!isResolved) {
+                isResolved = true;
                 reject(new Error(chrome.runtime.lastError.message));
-                return;
               }
-              
-              console.log("[Popup] Summary response received:", response);
-              if (response && typeof response === "string") {
-                resolve(response);
+              return;
+            }
+
+            console.log("[Popup] Summary response received:", response);
+            if (response && typeof response === "string") {
+              console.log(
+                "[Popup] Resolving with summary, length:",
+                response.length
+              );
+              if (!isResolved) {
+                console.log("[Popup] Setting isResolved to true and resolving");
+                isResolved = true;
+                // Add a small delay to ensure resolution happens before timeout
+                setTimeout(() => {
+                  console.log("[Popup] Actually resolving the promise");
+                  resolve(response);
+                }, 10);
               } else {
+                console.log("[Popup] Already resolved, ignoring response");
+              }
+            } else {
+              console.error("[Popup] Invalid response type:", typeof response);
+              if (!isResolved) {
+                console.log(
+                  "[Popup] Setting isResolved to true and rejecting due to invalid response"
+                );
+                isResolved = true;
                 reject(new Error("Invalid response from background script"));
+              } else {
+                console.log(
+                  "[Popup] Already resolved, ignoring invalid response"
+                );
               }
             }
-          );
-        }),
-        new Promise<string>((_, reject) => {
-          setTimeout(() => {
-            reject(new Error("Request timed out. Please try again."));
-          }, 30000); // 30 second timeout
-        })
-      ]);
+          }
+        );
+      });
 
-      console.log("[Popup] Summary received successfully, length:", summary.length);
+      console.log(
+        "[Popup] Summary received successfully, length:",
+        summary.length
+      );
       setResult(summary);
       setIsLoading(false);
     } catch (err: any) {
@@ -626,7 +688,6 @@ const Popup: React.FC = () => {
         {isLoading ? (
           <div className="loading-container">
             <div className="loading-spinner"></div>
-            <div className="loading-text">Analyzing page content...</div>
           </div>
         ) : (
           <pre id="result">{result}</pre>

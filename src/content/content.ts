@@ -1,5 +1,9 @@
 let summarizeBtn: HTMLButtonElement | null = null;
 let summaryTooltip: HTMLDivElement | null = null;
+let mouseupTimeout: ReturnType<typeof setTimeout> | null = null; // For debouncing mouseup events
+let isProcessingClick = false; // Prevent multiple tooltip creation
+let isShowingTooltip = false; // Prevent multiple tooltip creation
+let tooltipId = 0; // Unique identifier for tooltips
 
 // Error message constants
 const ERROR_MESSAGES = {
@@ -20,6 +24,104 @@ function setTextContent(element: HTMLElement, text: string): void {
 function sanitizeText(text: string): string {
   if (typeof text !== "string") return "";
   return text.replace(/[<>]/g, "").trim();
+}
+
+// Format bullet points and headings for better display
+function formatSummaryText(text: string): string {
+  if (typeof text !== "string") return "";
+
+  // Split text into lines for better processing
+  const lines = text.split("\n");
+  const formattedLines: string[] = [];
+  let inList = false;
+  let listItems: string[] = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+
+    // Check for headings (e.g., "**I. Writing Challenge Announcement:**")
+    if (line.match(/^\*\*.*\*\*:/)) {
+      // Close any open list before starting new section
+      if (inList && listItems.length > 0) {
+        formattedLines.push(
+          `<ul style="margin: 12px 0; padding-left: 20px; list-style-type: disc;">${listItems.join(
+            ""
+          )}</ul>`
+        );
+        listItems = [];
+        inList = false;
+      }
+
+      // Format heading
+      const heading = line.replace(
+        /\*\*(.*?)\*\*:/,
+        '<strong style="color: #1f2937; font-weight: 600; font-size: 16px; display: block; margin: 16px 0 8px 0;">$1</strong>'
+      );
+      formattedLines.push(heading);
+    }
+    // Check for bullet points (e.g., "* **Prizes:**  The announcement details...")
+    else if (line.match(/^\*\s+\*\*.*\*\*:/)) {
+      if (!inList) inList = true;
+
+      // Format the bullet point with bold label and description
+      const formattedLine = line.replace(
+        /^\*\s+\*\*(.*?)\*\*:\s*(.*)/,
+        '<li style="margin: 8px 0; padding-left: 8px;"><strong style="color: #1f2937; font-weight: 600;">$1:</strong> $2</li>'
+      );
+      listItems.push(formattedLine);
+    }
+    // Check for regular bullet points
+    else if (line.match(/^\*\s+/)) {
+      if (!inList) inList = true;
+
+      const formattedLine = line.replace(
+        /^\*\s+(.*)/,
+        '<li style="margin: 8px 0; padding-left: 8px;">$1</li>'
+      );
+      listItems.push(formattedLine);
+    }
+    // Regular text line
+    else if (line) {
+      // Close any open list
+      if (inList && listItems.length > 0) {
+        formattedLines.push(
+          `<ul style="margin: 12px 0; padding-left: 20px; list-style-type: disc;">${listItems.join(
+            ""
+          )}</ul>`
+        );
+        listItems = [];
+        inList = false;
+      }
+
+      formattedLines.push(line);
+    }
+    // Empty line
+    else {
+      // Close any open list
+      if (inList && listItems.length > 0) {
+        formattedLines.push(
+          `<ul style="margin: 12px 0; padding-left: 20px; list-style-type: disc;">${listItems.join(
+            ""
+          )}</ul>`
+        );
+        listItems = [];
+        inList = false;
+      }
+
+      formattedLines.push("<br>");
+    }
+  }
+
+  // Close any remaining open list
+  if (inList && listItems.length > 0) {
+    formattedLines.push(
+      `<ul style="margin: 12px 0; padding-left: 20px; list-style-type: disc;">${listItems.join(
+        ""
+      )}</ul>`
+    );
+  }
+
+  return formattedLines.join("");
 }
 
 // Ensure element is within viewport
@@ -174,6 +276,15 @@ async function showSummarizeButton(
 
     summarizeBtn.onclick = async () => {
       try {
+        // Prevent multiple clicks
+        if (isProcessingClick) {
+          console.log("[Content] Click already being processed, ignoring");
+          return;
+        }
+
+        isProcessingClick = true;
+        console.log("[Content] Processing summarize click...");
+
         await showLoadingTooltip();
 
         chrome.runtime.sendMessage(
@@ -182,27 +293,34 @@ async function showSummarizeButton(
             text: selectedText,
             showTooltip: true,
           },
-          (response) => {
+          (_response) => {
             try {
               if (chrome.runtime.lastError) {
                 console.error(
                   "[Content Script] Error sending message:",
                   chrome.runtime.lastError.message
                 );
-                showSummaryTooltip(
-                  "❌ Error: " + chrome.runtime.lastError.message
-                );
+                // Only show error tooltip if no tooltip is already showing
+                if (!isShowingTooltip) {
+                  showSummaryTooltip(
+                    "❌ Error: " + chrome.runtime.lastError.message
+                  );
+                }
                 return;
               }
 
-              if (response) {
-                showSummaryTooltip(response);
-              } else {
-                showSummaryTooltip(ERROR_MESSAGES.UNKNOWN_ERROR);
-              }
+              // Don't create tooltip here - the background script will send it
+              // Just log that we received the response
+              console.log("[Content] Received response from background script");
             } catch (error) {
               console.error("[Content] Response handling error:", error);
-              showSummaryTooltip(ERROR_MESSAGES.UNKNOWN_ERROR);
+              // Only show error tooltip if no tooltip is already showing
+              if (!isShowingTooltip) {
+                showSummaryTooltip(ERROR_MESSAGES.UNKNOWN_ERROR);
+              }
+            } finally {
+              // Reset the flag after processing
+              isProcessingClick = false;
             }
           }
         );
@@ -210,7 +328,11 @@ async function showSummarizeButton(
         removeSummarizeButton();
       } catch (error) {
         console.error("[Content] Summarize button click error:", error);
-        showSummaryTooltip(ERROR_MESSAGES.UNKNOWN_ERROR);
+        // Only show error tooltip if no tooltip is already showing
+        if (!isShowingTooltip) {
+          showSummaryTooltip(ERROR_MESSAGES.UNKNOWN_ERROR);
+        }
+        isProcessingClick = false; // Reset flag on error
       }
     };
 
@@ -233,6 +355,19 @@ function removeSummarizeButton(): void {
 
 async function showSummaryTooltip(summary: string): Promise<void> {
   try {
+    // Prevent multiple tooltips
+    if (isShowingTooltip) {
+      console.log("[Content] Already showing tooltip, ignoring");
+      return;
+    }
+
+    isShowingTooltip = true;
+    tooltipId++; // Increment tooltip ID
+    const currentTooltipId = tooltipId;
+    console.log(
+      `[Content] Showing summary tooltip (ID: ${currentTooltipId})...`
+    );
+
     removeSummaryTooltip();
 
     summaryTooltip = document.createElement("div");
@@ -267,9 +402,18 @@ async function showSummaryTooltip(summary: string): Promise<void> {
     });
 
     const summaryText = document.createElement("div");
-    setTextContent(summaryText, summary);
+    summaryText.innerHTML = formatSummaryText(summary);
     summaryText.style.marginBottom = "20px";
     summaryTooltip.appendChild(summaryText);
+
+    // Check if this is still the current tooltip
+    if (currentTooltipId !== tooltipId) {
+      console.log(
+        `[Content] Tooltip ${currentTooltipId} is outdated, removing`
+      );
+      summaryTooltip.remove();
+      return;
+    }
 
     const btnContainer = document.createElement("div");
     Object.assign(btnContainer.style, {
@@ -398,6 +542,21 @@ async function showSummaryTooltip(summary: string): Promise<void> {
 
 async function showLoadingTooltip(): Promise<void> {
   try {
+    // Prevent multiple tooltips
+    if (isShowingTooltip) {
+      console.log(
+        "[Content] Already showing tooltip, ignoring loading tooltip"
+      );
+      return;
+    }
+
+    isShowingTooltip = true;
+    tooltipId++; // Increment tooltip ID
+    const currentTooltipId = tooltipId;
+    console.log(
+      `[Content] Showing loading tooltip (ID: ${currentTooltipId})...`
+    );
+
     removeSummaryTooltip();
 
     summaryTooltip = document.createElement("div");
@@ -448,6 +607,16 @@ async function showLoadingTooltip(): Promise<void> {
 
     summaryTooltip.appendChild(loadingIcon);
     summaryTooltip.appendChild(loadingText);
+
+    // Check if this is still the current tooltip
+    if (currentTooltipId !== tooltipId) {
+      console.log(
+        `[Content] Loading tooltip ${currentTooltipId} is outdated, removing`
+      );
+      summaryTooltip.remove();
+      return;
+    }
+
     document.body.appendChild(summaryTooltip);
   } catch (error) {
     console.error("[Content] Error showing loading tooltip:", error);
@@ -456,12 +625,24 @@ async function showLoadingTooltip(): Promise<void> {
 
 function removeSummaryTooltip(): void {
   try {
+    // Remove any existing tooltips from the DOM
+    const existingTooltips = document.querySelectorAll(
+      ".gemini-summary-tooltip"
+    );
+    existingTooltips.forEach((tooltip) => {
+      console.log("[Content] Removing existing tooltip from DOM");
+      tooltip.remove();
+    });
+
     if (summaryTooltip) {
       summaryTooltip.remove();
       summaryTooltip = null;
     }
+    // Reset the flag when tooltip is removed
+    isShowingTooltip = false;
   } catch (error) {
     console.error("[Content] Error removing summary tooltip:", error);
+    isShowingTooltip = false; // Reset flag on error too
   }
 }
 
@@ -476,6 +657,20 @@ chrome.runtime.onMessage.addListener(
       }
 
       if (req.type === "show-summary-tooltip") {
+        // Prevent multiple tooltip creation from message listener
+        if (isShowingTooltip) {
+          console.log("[Content] Already showing tooltip, ignoring message");
+          return;
+        }
+
+        // Add timestamp check to prevent duplicate processing
+        const currentTime = Date.now();
+        if (req.timestamp && Math.abs(currentTime - req.timestamp) < 1000) {
+          console.log("[Content] Duplicate message detected, ignoring");
+          return;
+        }
+
+        console.log("[Content] Received show-summary-tooltip message");
         showSummaryTooltip(req.summary);
       }
     } catch (error) {
@@ -485,30 +680,44 @@ chrome.runtime.onMessage.addListener(
   }
 );
 
-// Mouse selection handler
+// Mouse selection handler with debouncing
 document.addEventListener("mouseup", async (e: MouseEvent) => {
   try {
-    if (e.target === summarizeBtn) {
-      return;
+    // Clear any existing timeout
+    if (mouseupTimeout) {
+      clearTimeout(mouseupTimeout);
     }
 
-    // Check if tooltip is enabled
-    const tooltipEnabled = await isTooltipEnabled();
-    if (!tooltipEnabled) {
-      removeSummarizeButton();
-      return;
-    }
+    // Debounce the mouseup event
+    mouseupTimeout = setTimeout(async () => {
+      // Prevent processing if we're already showing a tooltip
+      if (isShowingTooltip) {
+        console.log("[Content] Tooltip already showing, ignoring mouseup");
+        return;
+      }
 
-    const selection = window.getSelection();
-    const selectedText = selection?.toString()?.trim();
+      if (e.target === summarizeBtn) {
+        return;
+      }
 
-    if (selectedText && selectedText.length >= 10) {
-      const range = selection!.getRangeAt(0);
-      const rect = range.getBoundingClientRect();
-      await showSummarizeButton(rect, selectedText);
-    } else {
-      removeSummarizeButton();
-    }
+      // Check if tooltip is enabled
+      const tooltipEnabled = await isTooltipEnabled();
+      if (!tooltipEnabled) {
+        removeSummarizeButton();
+        return;
+      }
+
+      const selection = window.getSelection();
+      const selectedText = selection?.toString()?.trim();
+
+      if (selectedText && selectedText.length >= 10) {
+        const range = selection!.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        await showSummarizeButton(rect, selectedText);
+      } else {
+        removeSummarizeButton();
+      }
+    }, 150); // Increased debounce delay to 150ms for better stability
   } catch (error) {
     console.error("[Content] Mouseup error:", error);
     removeSummarizeButton();

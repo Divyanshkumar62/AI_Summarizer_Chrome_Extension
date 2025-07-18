@@ -118,6 +118,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
               await chrome.tabs.sendMessage(tabId, {
                 type: "show-summary-tooltip",
                 summary,
+                timestamp: Date.now(),
               });
             } catch (error) {
               console.error(
@@ -127,12 +128,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             }
           }
 
+          console.log("[Background] About to send response to popup...");
           sendResponse(summary);
+          console.log("[Background] Response sent successfully");
         } catch (error: any) {
           console.error("[Background] Error while summarizing:", error);
 
           let errorMsg = ERROR_MESSAGES.UNKNOWN_ERROR;
-          
+
           if (error.message) {
             // Check for specific error types
             if (error.message.includes("API key")) {
@@ -140,16 +143,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             } else if (error.message.includes("rate limit")) {
               errorMsg = "⚠️ Rate limit exceeded. Please try again later.";
             } else if (error.message.includes("503")) {
-              errorMsg = "❌ Gemini API service is temporarily unavailable. Please try again in a few minutes.";
+              errorMsg =
+                "❌ Gemini API service is temporarily unavailable. Please try again in a few minutes.";
             } else if (error.message.includes("403")) {
-              errorMsg = "❌ API key is invalid or has insufficient permissions.";
+              errorMsg =
+                "❌ API key is invalid or has insufficient permissions.";
             } else if (error.message.includes("400")) {
               errorMsg = "❌ Invalid API key or request format.";
             } else {
               errorMsg = error.message;
             }
           }
-          
+
           console.log("[Background] Sending error response:", errorMsg);
 
           if (
@@ -161,6 +166,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
               await chrome.tabs.sendMessage(sender.tab.id, {
                 type: "show-summary-tooltip",
                 summary: errorMsg,
+                timestamp: Date.now(),
               });
             } catch (tooltipError) {
               console.error(

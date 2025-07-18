@@ -419,7 +419,7 @@ const Options: React.FC = () => {
         if (feedbackEmail) formData.append("email", feedbackEmail);
         formData.append("metadata", JSON.stringify(metadata));
 
-        const response = await fetch("https://formspree.io/f/your-form-id", {
+        const response = await fetch("https://formspree.io/f/mldldprn", {
           method: "POST",
           body: formData,
           headers: {
@@ -453,6 +453,64 @@ const Options: React.FC = () => {
     if (feedbackMessage.length > 450) return "text-red-600";
     if (feedbackMessage.length > 400) return "text-yellow-600";
     return "text-gray-500";
+  };
+
+  // Helper function to show notifications
+  const showNotification = (
+    message: string,
+    type: "success" | "error" = "success"
+  ) => {
+    const notification = document.createElement("div");
+    notification.className = "copy-notification";
+    notification.textContent = message;
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: ${type === "success" ? "#10b981" : "#ef4444"};
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      z-index: 10000;
+      font-size: 14px;
+      font-weight: 500;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      animation: slideIn 0.3s ease;
+    `;
+    document.body.appendChild(notification);
+    setTimeout(() => {
+      notification.style.animation = "slideOut 0.3s ease";
+      setTimeout(() => document.body.removeChild(notification), 300);
+    }, 2000);
+  };
+
+  // Fallback copy function for older browsers
+  const fallbackCopyTextToClipboard = (text: string) => {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.top = "0";
+    textArea.style.left = "0";
+    textArea.style.position = "fixed";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+      const successful = document.execCommand("copy");
+      if (successful) {
+        showNotification("Email copied to clipboard!", "success");
+      } else {
+        showNotification(
+          "Failed to copy email. Please copy manually: " + text,
+          "error"
+        );
+      }
+    } catch {
+      showNotification(
+        "Failed to copy email. Please copy manually: " + text,
+        "error"
+      );
+    }
+    document.body.removeChild(textArea);
   };
 
   return (
@@ -986,7 +1044,7 @@ const Options: React.FC = () => {
                 >
                   <div className="support-channels">
                     <a
-                      href="https://github.com/your-username/smartdigest/issues"
+                      href="https://github.com/Divyanshkumar62/AI_Summarizer_Chrome_Extension/issues"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="support-link"
@@ -1000,21 +1058,50 @@ const Options: React.FC = () => {
                       </div>
                       <span className="material-icons">open_in_new</span>
                     </a>
-                    <a
-                      href="mailto:support@smartdigest.com"
-                      className="support-link"
-                    >
+                    <div className="support-link">
                       <span className="support-link-icon">📧</span>
                       <div className="support-link-content">
                         <span className="support-link-title">
                           Email Support
                         </span>
                         <span className="support-link-desc">
-                          support@smartdigest.com
+                          contactsmartdigest@gmail.com
                         </span>
                       </div>
-                      <span className="material-icons">open_in_new</span>
-                    </a>
+                      <div className="support-link-actions">
+                        <button
+                          onClick={() => {
+                            const email = "contactsmartdigest@gmail.com";
+
+                            // Try modern clipboard API first
+                            if (
+                              navigator.clipboard &&
+                              navigator.clipboard.writeText
+                            ) {
+                              navigator.clipboard
+                                .writeText(email)
+                                .then(() => {
+                                  showNotification(
+                                    "Email copied to clipboard!",
+                                    "success"
+                                  );
+                                })
+                                .catch(() => {
+                                  // Fallback to old method
+                                  fallbackCopyTextToClipboard(email);
+                                });
+                            } else {
+                              // Fallback for older browsers
+                              fallbackCopyTextToClipboard(email);
+                            }
+                          }}
+                          className="copy-btn"
+                          title="Copy email to clipboard"
+                        >
+                          <span className="material-icons">content_copy</span>
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1050,7 +1137,7 @@ const Options: React.FC = () => {
                     <div className="privacy-item">
                       <span className="material-icons">description</span>
                       <a
-                        href="PRIVACY.md"
+                        href="https://github.com/Divyanshkumar62/AI_Summarizer_Chrome_Extension/blob/main/PRIVACY.md"
                         target="_blank"
                         rel="noopener noreferrer"
                       >

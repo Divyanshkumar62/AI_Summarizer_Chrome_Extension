@@ -68,8 +68,8 @@ export async function getGeminiSummary(
     const prompt = getPromptForSummaryType(text, summaryType);
     console.log("[API] Generated prompt length:", prompt.length);
 
-    // Add a small delay to prevent rate limiting
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    // Reduced delay for better performance
+    await new Promise((resolve) => setTimeout(resolve, 50));
 
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
@@ -92,7 +92,7 @@ export async function getGeminiSummary(
             temperature: 0.3,
             topK: 40,
             topP: 0.95,
-            maxOutputTokens: 800, // Reduced to prevent issues
+            maxOutputTokens: 600, // Optimized for faster responses
           },
         }),
       }
@@ -218,7 +218,7 @@ function getPromptForSummaryType(text: string, summaryType: string): string {
     case "detailed":
       return `${baseText}\n\nProvide a comprehensive analysis covering the main points, key insights, important details, and overall significance.`;
     case "bullets":
-      return `${baseText}\n\nProvide a structured summary in bullet points, highlighting the key information, main takeaways, and important details.`;
+      return `${baseText}\n\nProvide a structured summary with clear headings and bullet points. Use **Heading:** format for main sections and * **Label:** Description format for bullet points. Format it like this:\n\n**Main Topic:**\n* **Key Point:** Description of the key point\n* **Another Point:** Description of another point\n\n**Important Details:**\n* **Detail 1:** Description of detail 1\n* **Detail 2:** Description of detail 2`;
     default:
       return `${baseText}\n\nProvide a clear and concise overview covering the main topic and key points.`;
   }
