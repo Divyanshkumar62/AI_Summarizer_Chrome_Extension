@@ -144,7 +144,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
               errorMsg = "⚠️ Rate limit exceeded. Please try again later.";
             } else if (error.message.includes("503")) {
               errorMsg =
-                "❌ Gemini API service is temporarily unavailable. Please try again in a few minutes.";
+                "⚠️ Gemini API is temporarily busy. Please try again in a moment or select a smaller text portion.";
             } else if (error.message.includes("403")) {
               errorMsg =
                 "❌ API key is invalid or has insufficient permissions.";
