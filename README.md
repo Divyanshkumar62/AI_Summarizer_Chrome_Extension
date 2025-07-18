@@ -17,7 +17,7 @@
 
 ### 🎤 Advanced Text-to-Speech
 
-- **Customizable Voice Settings**: Choose from available system voices or use recommended Google US English
+- **Customizable Voice Settings**: Choose from available system voices
 - **Speed Control**: Adjust playback speed from 0.5x to 2.0x
 - **Floating Controls**: Intuitive pause/resume and stop controls with visual feedback
 - **Cross-Browser Compatibility**: Works across different browsers with graceful fallbacks
