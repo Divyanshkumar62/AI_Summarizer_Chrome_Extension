@@ -112,14 +112,32 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           const tabId =
             sender.tab && sender.tab.id ? sender.tab.id : message.tabId;
 
+          console.log(
+            "[Background] Tab ID for tooltip:",
+            tabId,
+            "sender.tab:",
+            sender.tab,
+            "message.tabId:",
+            message.tabId
+          );
+
           if (showTooltip && typeof tabId === "number") {
             try {
-              console.log("[Background] Sending tooltip to tab:", tabId);
-              await chrome.tabs.sendMessage(tabId, {
+              console.log(
+                "[Background] Sending tooltip to tab:",
+                tabId,
+                "with summary length:",
+                summary.length
+              );
+              const result = await chrome.tabs.sendMessage(tabId, {
                 type: "show-summary-tooltip",
                 summary,
                 timestamp: Date.now(),
               });
+              console.log(
+                "[Background] Tooltip message sent successfully, result:",
+                result
+              );
             } catch (error) {
               console.error(
                 "[Background] Error sending tooltip message:",
@@ -163,11 +181,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             typeof sender.tab.id === "number"
           ) {
             try {
-              await chrome.tabs.sendMessage(sender.tab.id, {
+              console.log(
+                "[Background] Sending error tooltip to tab:",
+                sender.tab.id,
+                "with error:",
+                errorMsg
+              );
+              const result = await chrome.tabs.sendMessage(sender.tab.id, {
                 type: "show-summary-tooltip",
                 summary: errorMsg,
                 timestamp: Date.now(),
               });
+              console.log(
+                "[Background] Error tooltip message sent successfully, result:",
+                result
+              );
             } catch (tooltipError) {
               console.error(
                 "[Background] Error sending error tooltip:",

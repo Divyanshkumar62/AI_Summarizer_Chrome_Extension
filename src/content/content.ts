@@ -287,6 +287,17 @@ async function showSummarizeButton(
 
         await showLoadingTooltip();
 
+        // Set up a timeout to handle cases where the background script doesn't respond
+        const timeoutId = setTimeout(() => {
+          console.log("[Content] Request timeout, showing error");
+          removeSummaryTooltip();
+          showSummaryTooltip("⚠️ Request timed out. Please try again.");
+          isProcessingClick = false;
+        }, 35000); // 35 seconds timeout
+
+        console.log(
+          "[Content] Sending summarize-selection message to background script"
+        );
         chrome.runtime.sendMessage(
           {
             type: "summarize-selection",
@@ -295,6 +306,9 @@ async function showSummarizeButton(
           },
           (_response) => {
             try {
+              // Clear the timeout since we got a response
+              clearTimeout(timeoutId);
+
               if (chrome.runtime.lastError) {
                 console.error(
                   "[Content Script] Error sending message:",
@@ -355,12 +369,10 @@ function removeSummarizeButton(): void {
 
 async function showSummaryTooltip(summary: string): Promise<void> {
   try {
-    // Prevent multiple tooltips
-    if (isShowingTooltip) {
-      console.log("[Content] Already showing tooltip, ignoring");
-      return;
-    }
-
+    console.log(
+      "[Content] showSummaryTooltip called with summary:",
+      summary?.substring(0, 100) + "..."
+    );
     isShowingTooltip = true;
     tooltipId++; // Increment tooltip ID
     const currentTooltipId = tooltipId;
@@ -543,9 +555,9 @@ async function showSummaryTooltip(summary: string): Promise<void> {
 async function showLoadingTooltip(): Promise<void> {
   try {
     // Prevent multiple tooltips
-    if (isShowingTooltip) {
+    if (isShowingTooltip || summaryTooltip) {
       console.log(
-        "[Content] Already showing tooltip, ignoring loading tooltip"
+        "[Content] Tooltip already exists. Ignoring repeated show-tooltip message."
       );
       return;
     }
@@ -625,10 +637,18 @@ async function showLoadingTooltip(): Promise<void> {
 
 function removeSummaryTooltip(): void {
   try {
+    console.log(
+      "[Content] removeSummaryTooltip called, isShowingTooltip:",
+      isShowingTooltip,
+      "summaryTooltip exists:",
+      !!summaryTooltip
+    );
+
     // Remove any existing tooltips from the DOM
     const existingTooltips = document.querySelectorAll(
       ".gemini-summary-tooltip"
     );
+    console.log("[Content] Found existing tooltips:", existingTooltips.length);
     existingTooltips.forEach((tooltip) => {
       console.log("[Content] Removing existing tooltip from DOM");
       tooltip.remove();
@@ -640,6 +660,7 @@ function removeSummaryTooltip(): void {
     }
     // Reset the flag when tooltip is removed
     isShowingTooltip = false;
+    console.log("[Content] Tooltip removed, isShowingTooltip set to false");
   } catch (error) {
     console.error("[Content] Error removing summary tooltip:", error);
     isShowingTooltip = false; // Reset flag on error too
@@ -657,20 +678,21 @@ chrome.runtime.onMessage.addListener(
       }
 
       if (req.type === "show-summary-tooltip") {
-        // Prevent multiple tooltip creation from message listener
-        if (isShowingTooltip) {
-          console.log("[Content] Already showing tooltip, ignoring message");
-          return;
-        }
+        console.log(
+          "[Content] Received show-summary-tooltip message with summary length:",
+          req.summary?.length,
+          "timestamp:",
+          req.timestamp,
+          "current time:",
+          Date.now(),
+          "isShowingTooltip:",
+          isShowingTooltip,
+          "summaryTooltip exists:",
+          !!summaryTooltip
+        );
 
-        // Add timestamp check to prevent duplicate processing
-        const currentTime = Date.now();
-        if (req.timestamp && Math.abs(currentTime - req.timestamp) < 1000) {
-          console.log("[Content] Duplicate message detected, ignoring");
-          return;
-        }
-
-        console.log("[Content] Received show-summary-tooltip message");
+        // Remove any existing tooltip first, then show the summary
+        removeSummaryTooltip();
         showSummaryTooltip(req.summary);
       }
     } catch (error) {
@@ -691,8 +713,10 @@ document.addEventListener("mouseup", async (e: MouseEvent) => {
     // Debounce the mouseup event
     mouseupTimeout = setTimeout(async () => {
       // Prevent processing if we're already showing a tooltip
-      if (isShowingTooltip) {
-        console.log("[Content] Tooltip already showing, ignoring mouseup");
+      if (isShowingTooltip || summaryTooltip) {
+        console.log(
+          "[Content] Tooltip already exists. Ignoring repeated show-tooltip message."
+        );
         return;
       }
 

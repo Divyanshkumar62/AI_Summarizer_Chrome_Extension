@@ -78,33 +78,33 @@ export async function getGeminiSummary(
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
     try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [
-                  {
-                    text: prompt,
-                  },
-                ],
-              },
-            ],
-            generationConfig: {
-              temperature: 0.3,
-              topK: 40,
-              topP: 0.95,
-              maxOutputTokens: 600, // Optimized for faster responses
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: prompt,
+                },
+              ],
             },
-          }),
+          ],
+          generationConfig: {
+            temperature: 0.3,
+            topK: 40,
+            topP: 0.95,
+              maxOutputTokens: 600, // Optimized for faster responses
+          },
+        }),
           signal: controller.signal,
-        }
-      );
+      }
+    );
 
       clearTimeout(timeoutId);
 
@@ -114,62 +114,62 @@ export async function getGeminiSummary(
         response.statusText
       );
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error("[API] Gemini API error:", errorData);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error("[API] Gemini API error:", errorData);
 
-        if (response.status === 400) {
-          throw new Error("❌ Invalid API key or request format.");
-        } else if (response.status === 429) {
-          throw new Error("⚠️ Rate limit exceeded. Please try again later.");
-        } else if (response.status === 403) {
-          throw new Error(
-            "❌ API key is invalid or has insufficient permissions."
-          );
-        } else if (response.status === 503) {
+      if (response.status === 400) {
+        throw new Error("❌ Invalid API key or request format.");
+      } else if (response.status === 429) {
+        throw new Error("⚠️ Rate limit exceeded. Please try again later.");
+      } else if (response.status === 403) {
+        throw new Error(
+          "❌ API key is invalid or has insufficient permissions."
+        );
+      } else if (response.status === 503) {
           // Retry 503 errors up to 3 times with exponential backoff
           if (retryCount < 3) {
             const delay = Math.min(1000 * Math.pow(2, retryCount), 8000); // 1s, 2s, 4s, 8s max
-            console.log(
+          console.log(
               `[API] 503 error, retrying in ${delay}ms... (attempt ${
-                retryCount + 1
-              })`
-            );
+              retryCount + 1
+            })`
+          );
             await new Promise((resolve) => setTimeout(resolve, delay));
-            return getGeminiSummary(text, summaryType, apiKey, retryCount + 1);
-          }
-          throw new Error(
-            "⚠️ Gemini API is temporarily busy. Please try again in a moment or select a smaller text portion."
-          );
-        } else {
-          throw new Error(
-            `❌ API request failed (${response.status}). Please try again.`
-          );
+          return getGeminiSummary(text, summaryType, apiKey, retryCount + 1);
         }
+        throw new Error(
+            "⚠️ Gemini API is temporarily busy. Please try again in a moment or select a smaller text portion."
+        );
+      } else {
+        throw new Error(
+          `❌ API request failed (${response.status}). Please try again.`
+        );
       }
+    }
 
-      const data = await response.json();
-      console.log("[API] Response data received:", !!data);
+    const data = await response.json();
+    console.log("[API] Response data received:", !!data);
 
-      if (
-        !data.candidates ||
-        !data.candidates[0] ||
-        !data.candidates[0].content
-      ) {
-        throw new Error("❌ No response from AI service.");
-      }
+    if (
+      !data.candidates ||
+      !data.candidates[0] ||
+      !data.candidates[0].content
+    ) {
+      throw new Error("❌ No response from AI service.");
+    }
 
-      const summary = data.candidates[0].content.parts[0].text.trim();
+    const summary = data.candidates[0].content.parts[0].text.trim();
 
-      if (!summary) {
-        throw new Error("❌ Empty response from AI service.");
-      }
+    if (!summary) {
+      throw new Error("❌ Empty response from AI service.");
+    }
 
-      console.log(
-        "[API] Summary generated successfully, length:",
-        summary.length
-      );
-      return summary;
+    console.log(
+      "[API] Summary generated successfully, length:",
+      summary.length
+    );
+    return summary;
     } catch (fetchError: unknown) {
       clearTimeout(timeoutId);
 
@@ -194,7 +194,7 @@ export async function getGeminiSummary(
       error.message &&
       (error.message.includes("❌") || error.message.includes("⚠️"))
     ) {
-      throw error;
+    throw error;
     }
 
     // Generic error fallback
